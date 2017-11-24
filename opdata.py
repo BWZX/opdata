@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import tushare as ts
 from datetime import datetime as dt
-from mongoconnet import *
+from opdata.mongoconnet import *
 
 __T = ts.trade_cal()
 

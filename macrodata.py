@@ -3,13 +3,16 @@ import pandas as pd
 from datetime import datetime as dt
 
 def macrodata(start=None, end=None):
-    """
+    """macroeconomics data : Shibor | Reserve Ratio | M2 | GDP | CPI | Loan Rate.
+    the data start from 2006-10-08. Cause it is when the shibor data start on Tushare.
+
     parameters:
+    ---------
         start: a string present a date indicates the return data start from. for example: '2011-01-22'
         end  : refer to start
     return: 
-        macroeconomics data : Shibor | Reserve Ratio | M2 | GDP | CPI | Loan Rate.
-        the data start from 2006-10-08. Cause it is when the shibor data start on Tushare.
+    --------
+        pandas.DataFrame        
     """
     T = ts.trade_cal()
     T.rename(columns={'calendarDate':'date'}, inplace=True)
