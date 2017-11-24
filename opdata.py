@@ -118,7 +118,7 @@ def macrodata(start=None, end=None):
 
     lastvalue = 0.0
     def setValue(v):
-        global lastvalue
+        nonlocal lastvalue
         if pd.isnull(v) or v == 'None':
             return lastvalue
         else:
@@ -156,6 +156,6 @@ def macrodata(start=None, end=None):
 
 if __name__ == '__main__':
     print(macrodata())
-    print(get_day('002236','2007-08-05','2010-08-05'))
+    # print(get_day('002236','2007-08-05','2010-08-05'))
 
     

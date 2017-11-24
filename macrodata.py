@@ -84,7 +84,7 @@ def macrodata(start=None, end=None):
 
     lastvalue = 0.0
     def setValue(v):
-        global lastvalue
+        nonlocal lastvalue
         if pd.isnull(v) or v == 'None':
             return lastvalue
         else:
