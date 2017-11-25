@@ -79,11 +79,11 @@ def macrodata(start=None, end=None):
         cpi = cpi[cpi.date > 2006.6]
     cpi['date']=cpi['date'].apply(makeDate)
 
-    shibor=ts.shibor_data(2006)[['date','ON']]
-    for y in range(2007,2018):
-        shibor=pd.merge(shibor,ts.shibor_data(y)[['date','ON']],'outer')
-    shibor.rename(columns={'ON':'shibor'}, inplace=True)
-    shibor[['date']] = shibor[['date']].astype(str)
+    # shibor=ts.shibor_data(2006)[['date','ON']]
+    # for y in range(2007,2018):
+    #     shibor=pd.merge(shibor,ts.shibor_data(y)[['date','ON']],'outer')
+    # shibor.rename(columns={'ON':'shibor'}, inplace=True)
+    # shibor[['date']] = shibor[['date']].astype(str)
 
     lastvalue = 0.0
     def setValue(v):
@@ -114,8 +114,9 @@ def macrodata(start=None, end=None):
     lastvalue = rate.iloc[-1]['rate']
     T['rate']=T['rate'].apply(setValue)
     
-    T=shibor.merge(T,on='date',how='left')
+    # T=shibor.merge(T,on='date',how='left')
     T = T[T.isOpen >0.5]
+    T = T[T.date >= '2006-10-08']
     del T['isOpen']
     if start and end:
         T = T[T.date >= start]

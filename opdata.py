@@ -37,13 +37,16 @@ def get_day(code, start_date='2001-01-01', end_date='2017-10-10'):
     return r
 
 def macrodata(start=None, end=None):
-    """
+    """macroeconomics data : Shibor | Reserve Ratio | M2 | GDP | CPI | Loan Rate.
+    the data start from 2006-10-08. Cause it is when the shibor data start on Tushare.
+
     parameters:
+    ---------
         start: a string present a date indicates the return data start from. for example: '2011-01-22'
         end  : refer to start
     return: 
-        macroeconomics data : Shibor | Reserve Ratio | M2 | GDP | CPI | Loan Rate.
-        the data start from 2006-10-08. Cause it is when the shibor data start on Tushare.
+    --------
+        pandas.DataFrame        
     """
     T = ts.trade_cal()
     T.rename(columns={'calendarDate':'date'}, inplace=True)
@@ -110,11 +113,11 @@ def macrodata(start=None, end=None):
         cpi = cpi[cpi.date > 2006.6]
     cpi['date']=cpi['date'].apply(makeDate)
 
-    shibor=ts.shibor_data(2006)[['date','ON']]
-    for y in range(2007,2018):
-        shibor=pd.merge(shibor,ts.shibor_data(y)[['date','ON']],'outer')
-    shibor.rename(columns={'ON':'shibor'}, inplace=True)
-    shibor[['date']] = shibor[['date']].astype(str)
+    # shibor=ts.shibor_data(2006)[['date','ON']]
+    # for y in range(2007,2018):
+    #     shibor=pd.merge(shibor,ts.shibor_data(y)[['date','ON']],'outer')
+    # shibor.rename(columns={'ON':'shibor'}, inplace=True)
+    # shibor[['date']] = shibor[['date']].astype(str)
 
     lastvalue = 0.0
     def setValue(v):
@@ -145,8 +148,9 @@ def macrodata(start=None, end=None):
     lastvalue = rate.iloc[-1]['rate']
     T['rate']=T['rate'].apply(setValue)
     
-    T=shibor.merge(T,on='date',how='left')
+    # T=shibor.merge(T,on='date',how='left')
     T = T[T.isOpen >0.5]
+    T = T[T.date >= '2006-10-08']
     del T['isOpen']
     if start and end:
         T = T[T.date >= start]
