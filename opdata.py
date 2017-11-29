@@ -62,8 +62,8 @@ def macrodata(start=None, end=None):
         if loan.iloc[i].loan_type == '短期贷款(六个月以内)':
             rate = rate.append(loan.iloc[i][['date','rate']])
 
-    rrr = ts.get_rrr()[['date','changed']]  # 准备金率
-    rrr.rename(columns={'changed':'rrr'}, inplace=True)
+    rrr = ts.get_rrr()[['date','now']]  # 准备金率
+    rrr.rename(columns={'now':'rrr'}, inplace=True)
     rrr = rrr[rrr.date > '2006-08-01']
 
     dataScale = ['15','09']
@@ -156,6 +156,12 @@ def macrodata(start=None, end=None):
     if start and end:
         T = T[T.date >= start]
         T = T[T.date <= end]
+    
+    T[['rrr']] = T[['rrr']].astype(float)
+    T[['m2']] = T[['m2']].astype(float)
+    T[['rate']] = T[['rate']].astype(float)
+    T[['gdp']] = T[['gdp']].astype(float)
+    T[['cpi']] = T[['cpi']].astype(float)
 
     return T
 
