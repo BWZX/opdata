@@ -115,7 +115,8 @@ def macrodata(start=None, end=None):
 
     # shibor=ts.shibor_data(2006)[['date','ON']]
     # for y in range(2007,2018):
-    #     shibor=pd.merge(shibor,ts.shibor_data(y)[['date','ON']],'outer')
+    #     shibor=pd.merge(shibor,ts.shibor_d
+    # ata(y)[['date','ON']],'outer')
     # shibor.rename(columns={'ON':'shibor'}, inplace=True)
     # shibor[['date']] = shibor[['date']].astype(str)
 
@@ -157,6 +158,26 @@ def macrodata(start=None, end=None):
         T = T[T.date <= end]
 
     return T
+
+def _fetch_finance():
+    for year in range(2004,2018):
+        for quarter in range(1,5):            
+            fin = ts.get_report_data(year, quarter)[['code','eps','bvps','epcf','report_date']]
+            finance.insert(fin.to_dict('record'))
+
+
+
+def get_finance(code, start_date='2001-01-01', end_date='2017-10-10'):
+    cursor = security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+    df = pd.DataFrame(list(cursor))
+    T = ts.trade_cal()
+    T.rename(columns={'calendarDate':'date'}, inplace=True)
+    # today = dt.today()
+    # today = dt.strftime(today,'%Y-%m-%d')
+    T = T[T.date > start_date]
+    T = T[T.date <= end_date]
+
+    
 
 if __name__ == '__main__':
     print(macrodata())
