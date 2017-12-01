@@ -3,8 +3,8 @@ import json
 import pandas as pd
 import tushare as ts
 from datetime import datetime as dt
-# from opdata.mongoconnet import *
-from mongoconnet import *
+from opdata.mongoconnet import *
+# from mongoconnet import *
 
 __T = ts.trade_cal()
 
@@ -178,21 +178,44 @@ def _fetch_finance():
 
 
 
-def get_finance(code, start_date='2001-01-01', end_date='2017-10-10'):
-    cursor = security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
+    lastvalue = 0.0
+    def setValue(v):
+        nonlocal lastvalue
+        if pd.isnull(v) or v == 'None':
+            return lastvalue
+        else:
+            lastvalue = v
+            return lastvalue
+    cursor = finance.find({'code':str(code), 'date':{'$gte':'2004-01-01', '$lte': end_date}}).sort('date')
     df = pd.DataFrame(list(cursor))
+    del df['_id']
+    del df['code']
     T = ts.trade_cal()
     T.rename(columns={'calendarDate':'date'}, inplace=True)
-    # today = dt.today()
-    # today = dt.strftime(today,'%Y-%m-%d')
+    T=T.merge(df,on='date',how='left')
+    T[['bvps']] = T[['bvps']].astype(float)
+    T[['epcf']] = T[['epcf']].astype(float)
+    T[['eps']] = T[['eps']].astype(float)
+    lastvalue = 0.0
+    T['bvps']=T['bvps'].apply(setValue)
+    lastvalue = 0.0
+    T['epcf']=T['epcf'].apply(setValue)
+    lastvalue = 0.0
+    T['eps']=T['eps'].apply(setValue)
+    T = T[T.isOpen >0.5]
     T = T[T.date > start_date]
     T = T[T.date <= end_date]
+    T['code']=str(code)
+    del T['isOpen']
+    return T
 
     
 
 if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
-    _fetch_finance()
+    # _fetch_finance()
+    print(get_finance('000001'))
 
     
