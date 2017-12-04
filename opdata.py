@@ -30,6 +30,12 @@ def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
     T.rename(columns={'calendarDate':'date'}, inplace=True)
     T=T[T.date > '2001-01-01']
     T=T.merge(df,on='date',how='left')
+    T=T.drop_duplicates(['date'])
+    T[['open']] = T[['open']].astype(float)
+    T[['close']] = T[['close']].astype(float)
+    T[['high']] = T[['high']].astype(float)
+    T[['low']] = T[['low']].astype(float)
+    T[['volume']] = T[['volume']].astype(float)
     lastvalue = 0.0
     T['high']=T['high'].apply(setValue)
     lastvalue = 0.0
@@ -220,12 +226,13 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     df = pd.DataFrame(list(cursor))
     del df['_id']
     del df['code']
-    T = __T
-    T = T[T.date > '2003-01-01']
+    T = __T    
     T.rename(columns={'calendarDate':'date'}, inplace=True)
+    T = T[T.date > '2003-01-01']
     T=T.merge(df,on='date',how='left')
+    T=T.drop_duplicates(['date'])
     T[['bvps']] = T[['bvps']].astype(float)
-    T[['epcf']] = T[['epcf']].astype(float)
+    T[['epcf']] = T[['epcf']].astype(float)  
     T[['eps']] = T[['eps']].astype(float)
     lastvalue = 0.0
     T['bvps']=T['bvps'].apply(setValue)
@@ -246,6 +253,11 @@ if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
     # _fetch_finance()
-    print(get_day('000001'))
+    a=get_finance('002230','2011-01-01','2017-09-29')
+    b=get_day('002230','2011-01-01','2017-09-29')
+    # print(a)    
+    # print(a)
+    # print(b)
+    # print(len(a),'  ',len(b))
 
     
