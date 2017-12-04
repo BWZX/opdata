@@ -8,34 +8,63 @@ from opdata.mongoconnet import *
 
 __T = ts.trade_cal()
 
-def get_day(code, start_date='2001-01-01', end_date='2017-10-10'):
+def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
     # if not start_date:
     #     start_date='2001-01-01'
     # if not end_date:
     #     end_date='2020-10-10'
-
+    T= __T
     cursor = security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
     df = pd.DataFrame(list(cursor))
     if df.empty:
-        return df    
-    del df['_id']
-    firstdate=df.loc[0].date
-    t=__T[(__T.isOpen==1)&(__T.calendarDate>=firstdate)&(__T.calendarDate<=end_date)]   
-    t.columns=['date','isOpen']
-    r=pd.merge(df,t,on='date',how='right')
-    r=r.sort_values('date').reset_index()
-    del r['index']
-    del r['isOpen']
-    # print(r)
-    k=r.isnull()
-    k=list(k[k.open==True].index)
-    k.sort()
-    ii=list(r.columns).index('date')
-    for i in k:
-        date=r.iloc[i].date
-        r.iloc[i]=r.iloc[i-1]
-        r.iat[i, ii] = date    
-    return r
+        return df  
+
+    lastvalue = 0.0
+    def setValue(v):
+        nonlocal lastvalue
+        if pd.isnull(v) or v == 'None':
+            return lastvalue
+        else:
+            lastvalue = v
+            return lastvalue
+    T.rename(columns={'calendarDate':'date'}, inplace=True)
+    T=T[T.date > '2001-01-01']
+    T=T.merge(df,on='date',how='left')
+    lastvalue = 0.0
+    T['high']=T['high'].apply(setValue)
+    lastvalue = 0.0
+    T['low']=T['low'].apply(setValue)
+    lastvalue = 0.0
+    T['close']=T['close'].apply(setValue)
+    lastvalue = 0.0
+    T['open']=T['open'].apply(setValue)
+    lastvalue = 0.0
+    T['volume']=T['volume'].apply(setValue)
+    del T['_id']
+    T = T[T.isOpen >0.5]
+    T = T[T.date > start_date]
+    T = T[T.date <= end_date]
+    del T['isOpen']
+    return T    
+    
+    # del df['_id']
+    # firstdate=df.loc[0].date
+    # t=__T[(__T.isOpen==1)&(__T.calendarDate>=firstdate)&(__T.calendarDate<=end_date)]   
+    # t.columns=['date','isOpen']
+    # r=pd.merge(df,t,on='date',how='right')
+    # r=r.sort_values('date').reset_index()
+    # del r['index']
+    # del r['isOpen']
+    # # print(r)
+    # k=r.isnull()
+    # k=list(k[k.open==True].index)
+    # k.sort()
+    # ii=list(r.columns).index('date')
+    # for i in k:
+    #     date=r.iloc[i].date
+    #     r.iloc[i]=r.iloc[i-1]
+    #     r.iat[i, ii] = date    
+    # return r
 
 def macrodata(start=None, end=None):
     """macroeconomics data : Shibor | Reserve Ratio | M2 | GDP | CPI | Loan Rate.
@@ -49,7 +78,7 @@ def macrodata(start=None, end=None):
     --------
         pandas.DataFrame        
     """
-    T = ts.trade_cal()
+    T = __T
     T.rename(columns={'calendarDate':'date'}, inplace=True)
     today = dt.today()
     today = dt.strftime(today,'%Y-%m-%d')
@@ -191,7 +220,8 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     df = pd.DataFrame(list(cursor))
     del df['_id']
     del df['code']
-    T = ts.trade_cal()
+    T = __T
+    T = T[T.date > '2003-01-01']
     T.rename(columns={'calendarDate':'date'}, inplace=True)
     T=T.merge(df,on='date',how='left')
     T[['bvps']] = T[['bvps']].astype(float)
@@ -216,6 +246,6 @@ if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
     # _fetch_finance()
-    print(get_finance('000001'))
+    print(get_day('000001'))
 
     
