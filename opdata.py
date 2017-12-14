@@ -204,14 +204,24 @@ def macrodata(start=None, end=None):
 def _fetch_finance():
     for year in range(2004,2018):
         set_year = lambda x: str(year)+'-'+ x
-        for quarter in range(1,5):            
-            fin = ts.get_report_data(year, quarter)[['code','eps','bvps','epcf','report_date']]
-            fin.rename(columns={'report_date':'date'}, inplace=True)            
-            fin['date']=fin['date'].apply(set_year)
-            finance.insert(fin.to_dict('record'))
+        for quarter in range(1,5): 
+            print(year,' year ','quarter ',quarter)           
+            rep = ts.get_report_data(year, quarter)[['code','eps','bvps','epcf','report_date']]
+            pro = ts.get_profit_data(year,quarter)[['code', 'roe', 'net_profit_ratio', 'gross_profit_rate', 'net_profits', 'business_income', 'bips']]
+            ope = ts.get_operation_data(year,quarter)[['code', 'arturnover', 'arturndays', 'inventory_turnover', 'currentasset_turnover', 'currentasset_days']]
+            gro = ts.get_growth_data(year,quarter)[['code', 'mbrg', 'nprg', 'nav', 'epsg', 'seg']]
+            deb = ts.get_debtpaying_data(year,quarter)[['code', 'currentratio', 'quickratio', 'cashratio', 'icratio', 'sheqratio', 'adratio']]
+            cas = ts.get_cashflow_data(year,quarter)[['code', 'cf_sales', 'rateofreturn', 'cf_nm', 'cf_liabilities', 'cashflowratio']]
+            
+            rep.rename(columns={'report_date':'date'}, inplace=True)            
+            rep['date']=rep['date'].apply(set_year)
+            rep=rep.merge(pro,on='code',how='left')
+            rep=rep.merge(ope,on='code',how='left')
+            rep=rep.merge(gro,on='code',how='left')
+            rep=rep.merge(deb,on='code',how='left')
+            rep=rep.merge(cas,on='code',how='left')
+            finance.insert(rep.to_dict('record'))
             print(year, quarter)
-
-
 
 def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     lastvalue = 0.0
@@ -231,15 +241,21 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     T = T[T.date > '2003-01-01']
     T=T.merge(df,on='date',how='left')
     T=T.drop_duplicates(['date'])
-    T[['bvps']] = T[['bvps']].astype(float)
-    T[['epcf']] = T[['epcf']].astype(float)  
-    T[['eps']] = T[['eps']].astype(float)
-    lastvalue = 0.0
-    T['bvps']=T['bvps'].apply(setValue)
-    lastvalue = 0.0
-    T['epcf']=T['epcf'].apply(setValue)
-    lastvalue = 0.0
-    T['eps']=T['eps'].apply(setValue)
+    for column in T:
+        if column != 'code' and column != 'date':
+            T[[column]] = T[[column]].astype(float)
+            lastvalue = 0.0
+            T[column]=T[column].apply(setValue)
+            
+    # T[['bvps']] = T[['bvps']].astype(float)
+    # T[['epcf']] = T[['epcf']].astype(float)  
+    # T[['eps']] = T[['eps']].astype(float)
+    # lastvalue = 0.0
+    # T['bvps']=T['bvps'].apply(setValue)
+    # lastvalue = 0.0
+    # T['epcf']=T['epcf'].apply(setValue)
+    # lastvalue = 0.0
+    # T['eps']=T['eps'].apply(setValue)
     T = T[T.isOpen >0.5]
     T = T[T.date > start_date]
     T = T[T.date <= end_date]
@@ -247,17 +263,15 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     del T['isOpen']
     return T
 
-    
+
+# __INDUSTRY_CLASSIFIED = ts.get_industry_classified()
+# __CONCEPT_CLASSIFIED = ts.get_concept_classified()
+# get_industry = lambda code:__INDUSTRY_CLASSIFIED[__INDUSTRY_CLASSIFIED.code==code].iloc[0].c_name 
+# get_concept = lambda code:__CONCEPT_CLASSIFIED[__CONCEPT_CLASSIFIED.code==code].iloc[0].c_name   
 
 if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
-    # _fetch_finance()
-    a=get_finance('002230','2011-01-01','2017-09-29')
-    b=get_day('002230','2011-01-01','2017-09-29')
-    # print(a)    
-    # print(a)
-    # print(b)
-    # print(len(a),'  ',len(b))
-
+    _fetch_finance()
+    # print(get_finance('000001'))
     
