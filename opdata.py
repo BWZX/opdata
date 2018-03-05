@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+﻿# -*- coding: utf-8 -*-
 import json
 import pandas as pd
 import tushare as ts
@@ -269,9 +269,56 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
 # get_industry = lambda code:__INDUSTRY_CLASSIFIED[__INDUSTRY_CLASSIFIED.code==code].iloc[0].c_name 
 # get_concept = lambda code:__CONCEPT_CLASSIFIED[__CONCEPT_CLASSIFIED.code==code].iloc[0].c_name   
 
+
+def get_local_future(code, start_date='2009-10-01', end_date='2018-03-02'):
+    # if not start_date:
+    #     start_date='2001-01-01'
+    # if not end_date:
+    #     end_date='2020-10-10'
+    T= __T
+    cursor = future.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+    df = pd.DataFrame(list(cursor))
+    if df.empty:
+        return df  
+
+    lastvalue = 0.0
+    def setValue(v):
+        nonlocal lastvalue
+        if pd.isnull(v) or v == 'None':
+            return lastvalue
+        else:
+            lastvalue = v
+            return lastvalue
+    T.rename(columns={'calendarDate':'date'}, inplace=True)
+    T=T[T.date > '2001-01-01']
+    T=T.merge(df,on='date',how='left')
+    T=T.drop_duplicates(['date'])
+    T[['open']] = T[['open']].astype(float)
+    T[['close']] = T[['close']].astype(float)
+    T[['high']] = T[['high']].astype(float)
+    T[['low']] = T[['low']].astype(float)
+    T[['volume']] = T[['volume']].astype(float)
+    lastvalue = 0.0
+    T['high']=T['high'].apply(setValue)
+    lastvalue = 0.0
+    T['low']=T['low'].apply(setValue)
+    lastvalue = 0.0
+    T['close']=T['close'].apply(setValue)
+    lastvalue = 0.0
+    T['open']=T['open'].apply(setValue)
+    lastvalue = 0.0
+    T['volume']=T['volume'].apply(setValue)
+    del T['_id']
+    T = T[T.isOpen >0.5]
+    T = T[T.date > start_date]
+    T = T[T.date <= end_date]
+    del T['isOpen']
+    return T    
+
 if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
-    _fetch_finance()
+    # _fetch_finance()
     # print(get_finance('000001'))
+    print(get_local_future('A99'))
     
