@@ -48,7 +48,7 @@ def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
     T['volume']=T['volume'].apply(setValue)
     del T['_id']
     T = T[T.isOpen >0.5]
-    T = T[T.date > start_date]
+    T = T[T.date >= start_date]
     T = T[T.date <= end_date]
     del T['isOpen']
     return T    
@@ -257,7 +257,7 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     # lastvalue = 0.0
     # T['eps']=T['eps'].apply(setValue)
     T = T[T.isOpen >0.5]
-    T = T[T.date > start_date]
+    T = T[T.date >= start_date]
     T = T[T.date <= end_date]
     T['code']=str(code)
     del T['isOpen']
@@ -310,7 +310,7 @@ def get_local_future(code, start_date='2009-10-01', end_date='2018-03-02'):
     T['volume']=T['volume'].apply(setValue)
     del T['_id']
     T = T[T.isOpen >0.5]
-    T = T[T.date > start_date]
+    T = T[T.date >= start_date]
     T = T[T.date <= end_date]
     del T['isOpen']
     return T    
