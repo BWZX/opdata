@@ -320,6 +320,9 @@ def get_future(code, start_date='2009-10-01', end_date='2018-03-02'):
     df = pd.DataFrame(list(cursor))
     if df.empty:
         return df 
+    del df['_id']
+    if df.iloc[0].volume == 'n/a':
+        df['volume'] = 0
     return df    
 
 if __name__ == '__main__':
