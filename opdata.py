@@ -315,10 +315,18 @@ def get_local_future(code, start_date='2009-10-01', end_date='2018-03-02'):
     del T['isOpen']
     return T    
 
+def get_future(code, start_date='2009-10-01', end_date='2018-03-02'):    
+    cursor = future.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+    df = pd.DataFrame(list(cursor))
+    if df.empty:
+        return df 
+    return df    
+
 if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
     # _fetch_finance()
     # print(get_finance('000001'))
     print(get_local_future('A99'))
+    print(get_future('XAU/USD'))
     
