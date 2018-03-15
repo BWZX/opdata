@@ -4,8 +4,8 @@ import pandas as pd
 import tushare as ts
 from datetime import datetime as dt
 import numpy as np
-# from opdata.mongoconnet import *
-from mongoconnet import *
+from opdata.mongoconnet import *
+# from mongoconnet import *
 
 __T = ts.trade_cal()
 
@@ -408,7 +408,8 @@ def get_month(mdate):
         out = [last['code'],mdate,last['open'],last['close'],last['high'],last['low'],last['volume']]
         out.append(momentum)
         out = out + __get_predictors(df) 
-        T[len(T)] = out
+        T.loc[len(T)] = out
+        #print(T)
     return T
     
 if __name__ == '__main__':
