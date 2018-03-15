@@ -372,6 +372,8 @@ def get_month(mdate):
         assert('data not in the range')
 
     import calendar as cal 
+    from tqdm import tqdm
+    
     lastyear = year-1
     start_date = '1995-01-31'    
     columns=['code', 'date', 'open', 'close', 'high', 'low', 'volume', 'momentum', 'adj_close', 'obv', 'rsi6', 'rsi12', 'sma3', 'ema6', 'ema12', 'atr14', 'mfi14', 'adx14', 'adx20', 'mom1', 'mom3', 'cci12', 'cci20', 'rocr3', 'rocr12', 'macd', 'macd_sig', 'macd_hist', 'willr', 'tsf10', 'tsf20', 'trix', 'bbandupper', 'bbandmiddle', 'bbandlower']
@@ -383,11 +385,11 @@ def get_month(mdate):
             break
     end_date = cal.monthrange(year,month)
     end_date = str(year)+'-' + str(end_date[0]) + '-' + str(end_date[1])
-    for code in dfM[thedate]:         
+    for code in tqdm(dfM[thedate]):         
         code = str(code)
         code = '000000'+code
         code = code[-6:]
-        print(code)
+        # print(code)
         cursor = securityM.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
         df = pd.DataFrame(list(cursor))
 
@@ -407,7 +409,7 @@ def get_month(mdate):
         out.append(momentum)
         out = out + __get_predictors(df) 
         T[len(T)] = out
-    return out
+    return T
     
 if __name__ == '__main__':
     # print(macrodata())
