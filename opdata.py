@@ -364,7 +364,7 @@ def get_month(mdate):
     checkm = mdate.split('-')
     year = int(checkm[0])
     month = int(checkm[1])
-    dfM = pd.read_csv('./hs300.csv')
+    dfM = pd.read_csv('~/python/opdata/hs300.csv')
     date = checkm[0]+checkm[1]
     if len(checkm)==2 and 200607 <= int(date) <=201607:
         pass
@@ -384,7 +384,7 @@ def get_month(mdate):
         if int(date) < int(d):
             break
     end_date = cal.monthrange(year,month)
-    end_date = str(year)+'-' + str(end_date[0]) + '-' + str(end_date[1])
+    end_date = str(year)+'-' + str(month) + '-' + str(end_date[1])
     for code in tqdm(dfM[thedate]):         
         code = str(code)
         code = '000000'+code
@@ -394,16 +394,19 @@ def get_month(mdate):
         df = pd.DataFrame(list(cursor))
 
         if df.empty:
+            print(code)
             df_M=ts.get_k_data(code,ktype='M') 
             records = json.loads(df_M.T.to_json()).values()
-            securityM.insert(records)
+            if securityM.count({'code':code}) <=0:
+                securityM.insert(records)
             cursor = securityM.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
             df = pd.DataFrame(list(cursor))
 
-        if(len(df)>12):
+        if(len(df)>=12):
             momentum = (df.iloc[-1]['close'] - df.iloc[-12]['close'])/df.iloc[-12]['close']
         else:
             momentum = 0.0
+        assert(not df.empty)
         last = df.iloc[-1].to_dict()
         out = [last['code'],mdate,last['open'],last['close'],last['high'],last['low'],last['volume']]
         out.append(momentum)
