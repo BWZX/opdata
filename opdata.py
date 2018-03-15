@@ -4,8 +4,8 @@ import pandas as pd
 import tushare as ts
 from datetime import datetime as dt
 import numpy as np
-from opdata.mongoconnet import *
-# from mongoconnet import *
+# from opdata.mongoconnet import *
+from mongoconnet import *
 
 __T = ts.trade_cal()
 
@@ -372,6 +372,8 @@ def get_month(mdate):
         assert('data not in the range')
 
     import calendar as cal 
+    import config
+
     lastyear = year-1
     start_date = '1995-01-31'    
     columns=['code', 'date', 'open', 'close', 'high', 'low', 'volume', 'momentum', 'adj_close', 'obv', 'rsi6', 'rsi12', 'sma3', 'ema6', 'ema12', 'atr14', 'mfi14', 'adx14', 'adx20', 'mom1', 'mom3', 'cci12', 'cci20', 'rocr3', 'rocr12', 'macd', 'macd_sig', 'macd_hist', 'willr', 'tsf10', 'tsf20', 'trix', 'bbandupper', 'bbandmiddle', 'bbandlower']
@@ -390,6 +392,15 @@ def get_month(mdate):
         print(code)
         cursor = securityM.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
         df = pd.DataFrame(list(cursor))
+        
+        if df.empty:
+            df_M=ts.get_k_data(code,ktype='M') 
+            df_M['name']=config.StocksList[code]
+            records = json.loads(df_M.T.to_json()).values()
+            securityM.insert(records)
+            cursor = securityM.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+            df = pd.DataFrame(list(cursor))
+
         if(len(df)>12):
             momentum = (df.iloc[-1]['close'] - df.iloc[-12]['close'])/df.iloc[-12]['close']
         else:
