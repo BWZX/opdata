@@ -387,8 +387,9 @@ def get_month(mdate):
     end_date = str(year)+'-' + str(month) + '-' + str(end_date[1])
     for code in tqdm(dfM[thedate]):         
         code = str(code)
-        code = '000000'+code
-        code = code[-6:]
+        if len(code) <6:
+            code = '000000'+code
+            code = code[-6:]
         # print(code)
         cursor = securityM.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
         df = pd.DataFrame(list(cursor))
