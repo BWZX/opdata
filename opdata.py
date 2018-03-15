@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import tushare as ts
 from datetime import datetime as dt
+import numpy as np
 from opdata.mongoconnet import *
 # from mongoconnet import *
 
@@ -323,13 +324,89 @@ def get_future(code, start_date='2009-10-01', end_date='2018-03-02'):
     del df['_id']
     if df.iloc[0].volume == 'n/a':
         df['volume'] = 0
-    return df    
+    return df  
 
+def __get_predictors(data):
+    import talib
+    open_list = np.asarray(data["open"].tolist())
+    close_list = np.asarray(data["close"].tolist())
+    high_list = np.asarray(data["high"].tolist())
+    low_list = np.asarray(data["low"].tolist())
+    volume_list = np.asarray(data["volume"].tolist())
+
+    adj_close = close_list
+    obv = talib.OBV(close_list, volume_list)
+    rsi6 = talib.RSI(close_list, timeperiod=6)
+    rsi12 = talib.RSI(close_list, timeperiod=12)
+    sma3 = talib.SMA(close_list, timeperiod=3)
+    ema6 = talib.EMA(close_list, timeperiod=6)
+    ema12 = talib.EMA(close_list, timeperiod=12)
+    atr14 = talib.ATR(high_list, low_list, close_list, timeperiod=14)
+    mfi14 = talib.MFI(high_list, low_list, close_list, volume_list, timeperiod=14)
+    adx14 = talib.ADX(high_list, low_list, close_list, timeperiod=14)
+    adx20 = talib.ADX(high_list, low_list, close_list, timeperiod=20)
+    mom1 = talib.MOM(close_list, timeperiod=1)
+    mom3 = talib.MOM(close_list, timeperiod=3)
+    cci12 = talib.CCI(high_list, low_list, close_list, timeperiod=14)
+    cci20 = talib.CCI(high_list, low_list, close_list, timeperiod=20)
+    rocr3 = talib.ROCR(close_list, timeperiod=3)
+    rocr12 = talib.ROCR(close_list, timeperiod=12)
+    macd, macd_sig, macd_hist = talib.MACD(close_list)
+    willr = talib.WILLR(high_list, low_list, close_list)
+    tsf10 = talib.TSF(close_list, timeperiod=10)
+    tsf20 = talib.TSF(close_list, timeperiod=20)
+    trix = talib.TRIX(close_list)
+    bbandupper, bbandmiddle, bbandlower = talib.BBANDS(close_list)
+    return [adj_close[-1], obv[-1], rsi6[-1], rsi12[-1], sma3[-1], ema6[-1], ema12[-1], atr14[-1], mfi14[-1], adx14[-1], adx20[-1], mom1[-1], mom3[-1], cci12[-1], cci20[-1], \
+            rocr3[-1], rocr12[-1], macd[-1], macd_sig[-1], macd_hist[-1], willr[-1], tsf10[-1], tsf20[-1], trix[-1], bbandupper[-1], bbandmiddle[-1], bbandlower[-1]]
+
+def get_month(mdate):
+    checkm = mdate.split('-')
+    year = int(checkm[0])
+    month = int(checkm[1])
+    dfM = pd.read_csv('./hs300.csv')
+    date = checkm[0]+checkm[1]
+    if len(checkm)==2 and 200607 <= int(date) <=201607:
+        pass
+    else:
+        assert('data not in the range')
+
+    import calendar as cal 
+    lastyear = year-1
+    start_date = '1995-01-31'    
+    columns=['code', 'date', 'open', 'close', 'high', 'low', 'volume', 'momentum', 'adj_close', 'obv', 'rsi6', 'rsi12', 'sma3', 'ema6', 'ema12', 'atr14', 'mfi14', 'adx14', 'adx20', 'mom1', 'mom3', 'cci12', 'cci20', 'rocr3', 'rocr12', 'macd', 'macd_sig', 'macd_hist', 'willr', 'tsf10', 'tsf20', 'trix', 'bbandupper', 'bbandmiddle', 'bbandlower']
+    T = pd.DataFrame([], columns=columns)
+    thedate=''
+    for d in dfM:
+        thedate = str(d)
+        if int(date) < int(d):
+            break
+    end_date = cal.monthrange(year,month)
+    end_date = str(year)+'-' + str(end_date[0]) + '-' + str(end_date[1])
+    for code in dfM[thedate]:         
+        code = str(code)
+        code = '000000'+code
+        code = code[-6:]
+        print(code)
+        cursor = securityM.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+        df = pd.DataFrame(list(cursor))
+        if(len(df)>12):
+            momentum = (df.iloc[-1]['close'] - df.iloc[-12]['close'])/df.iloc[-12]['close']
+        else:
+            momentum = 0.0
+        last = df.iloc[-1].to_dict()
+        out = [last['code'],mdate,last['open'],last['close'],last['high'],last['low'],last['volume']]
+        out.append(momentum)
+        out = out + __get_predictors(df) 
+        T[len(T)] = out
+    return out
+    
 if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
     # _fetch_finance()
     # print(get_finance('000001'))
-    print(get_local_future('A99'))
-    print(get_future('XAU/USD'))
+    # print(get_local_future('A99'))
+    # print(get_future('XAU/USD'))
+    print(get_month('2012-12'))
     
