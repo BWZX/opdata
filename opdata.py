@@ -383,7 +383,7 @@ def get_month(mdate):
         thedate = str(d)
         if int(date) < int(d):
             break
-    temk=__T[(__T.calendarDate >=month+'-01') & (__T.calendarDate<=month+'-31') & (__T.isOpen ==1)]
+    temk=__T[(__T.calendarDate >=mdate+'-01') & (__T.calendarDate<=mdate+'-31') & (__T.isOpen ==1)]
     end_date = temk.iloc[-1]['calendarDate']
     for code in tqdm(dfM[thedate]):         
         code = str(code)
