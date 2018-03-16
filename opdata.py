@@ -407,7 +407,8 @@ def get_month(mdate):
             momentum = (df.iloc[-1]['close'] - df.iloc[-12]['close'])/df.iloc[-12]['close']
         else:
             momentum = 0.0
-        assert(not df.empty)
+            continue
+        #assert(not df.empty)
         last = df.iloc[-1].to_dict()
         out = [last['code'],mdate,last['open'],last['close'],last['high'],last['low'],last['volume']]
         out.append(momentum)
