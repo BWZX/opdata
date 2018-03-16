@@ -5,6 +5,8 @@ import tushare as ts
 from datetime import datetime as dt
 import numpy as np
 from opdata.mongoconnet import *
+from tqdm import tqdm
+    
 # from mongoconnet import *
 
 __T = ts.trade_cal()
@@ -369,11 +371,9 @@ def get_month(mdate):
     if len(checkm)==2 and 200607 <= int(date) <=201607:
         pass
     else:
-        assert('data not in the range')
+        print('data not in the range')
+        return
 
-    import calendar as cal 
-    from tqdm import tqdm
-    
     lastyear = year-1
     start_date = '1995-01-31'    
     columns=['code', 'date', 'open', 'close', 'high', 'low', 'volume', 'momentum', 'adj_close', 'obv', 'rsi6', 'rsi12', 'sma3', 'ema6', 'ema12', 'atr14', 'mfi14', 'adx14', 'adx20', 'mom1', 'mom3', 'cci12', 'cci20', 'rocr3', 'rocr12', 'macd', 'macd_sig', 'macd_hist', 'willr', 'tsf10', 'tsf20', 'trix', 'bbandupper', 'bbandmiddle', 'bbandlower']
@@ -383,8 +383,8 @@ def get_month(mdate):
         thedate = str(d)
         if int(date) < int(d):
             break
-    end_date = cal.monthrange(year,month)
-    end_date = str(year)+'-' + str(month) + '-' + str(end_date[1])
+    temk=__T[(__T.calendarDate >=month+'-01') & (__T.calendarDate<=month+'-31') & (__T.isOpen ==1)]
+    end_date = temk.iloc[-1]['calendarDate']
     for code in tqdm(dfM[thedate]):         
         code = str(code)
         if len(code) <6:
