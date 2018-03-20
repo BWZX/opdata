@@ -369,7 +369,7 @@ def get_month(mdate):
     month = int(checkm[1])      
     dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'hs300.csv'))
     date = checkm[0]+checkm[1]
-    if len(checkm)==2 and 200607 <= int(date) <=201607:
+    if len(checkm)==2 and 200607 <= int(date) <=201802:
         pass
     else:
         print('data not in the range')
