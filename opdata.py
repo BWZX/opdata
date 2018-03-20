@@ -4,9 +4,10 @@ import pandas as pd
 import tushare as ts
 from datetime import datetime as dt
 import numpy as np
-from opdata.mongoconnet import *
+import os
 from tqdm import tqdm
-    
+
+from opdata.mongoconnet import *    
 # from mongoconnet import *
 
 __T = ts.trade_cal()
@@ -365,8 +366,8 @@ def __get_predictors(data):
 def get_month(mdate):
     checkm = mdate.split('-')
     year = int(checkm[0])
-    month = int(checkm[1])
-    dfM = pd.read_csv('~/python/opdata/hs300.csv')
+    month = int(checkm[1])      
+    dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'hs300.csv'))
     date = checkm[0]+checkm[1]
     if len(checkm)==2 and 200607 <= int(date) <=201607:
         pass
@@ -400,6 +401,10 @@ def get_month(mdate):
             records = json.loads(df_M.T.to_json()).values()
             if securityM.count({'code':code}) <=0:
                 securityM.insert(records)
+                print('insert new data to database at stock code .',code)
+            else:
+                print('the stock {0} has no data at this month.'.format(code))
+                continue
             cursor = securityM.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
             df = pd.DataFrame(list(cursor))
 
@@ -407,7 +412,7 @@ def get_month(mdate):
             momentum = (df.iloc[-1]['close'] - df.iloc[-12]['close'])/df.iloc[-12]['close']
         else:
             momentum = 0.0
-            continue
+            # continue
         #assert(not df.empty)
         last = df.iloc[-1].to_dict()
         out = [last['code'],mdate,last['open'],last['close'],last['high'],last['low'],last['volume']]
@@ -424,5 +429,5 @@ if __name__ == '__main__':
     # print(get_finance('000001'))
     # print(get_local_future('A99'))
     # print(get_future('XAU/USD'))
-    print(get_month('2012-12'))
+    print(get_month('2010-01'))
     
