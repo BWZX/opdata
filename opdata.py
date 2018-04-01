@@ -7,8 +7,8 @@ import numpy as np
 import os
 from tqdm import tqdm
 
-from opdata.mongoconnet import *    
-# from mongoconnet import *
+# from opdata.mongoconnet import *    
+from mongoconnet import *
 
 __T = ts.trade_cal()
 
@@ -231,7 +231,7 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     lastvalue = 0.0
     def setValue(v):
         nonlocal lastvalue
-        if pd.isnull(v) or v == 'None':
+        if pd.isnull(v) or v == 'None' or v == '--':
             return lastvalue
         else:
             lastvalue = v
@@ -247,7 +247,10 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     T=T.drop_duplicates(['date'])
     for column in T:
         if column != 'code' and column != 'date':
-            T[[column]] = T[[column]].astype(float)
+            try:
+                T[[column]] = T[[column]].astype(float)
+            except ValueError:
+                pass            
             lastvalue = 0.0
             T[column]=T[column].apply(setValue)
             
@@ -421,13 +424,16 @@ def get_month(mdate):
         T.loc[len(T)] = out
         #print(T)
     return T
+
+def get_ts_finance(code, period):
+    pass
     
 if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
     # _fetch_finance()
-    # print(get_finance('000001'))
+    print(get_finance('000001'))
     # print(get_local_future('A99'))
     # print(get_future('XAU/USD'))
-    print(get_month('2010-01'))
+    # print(get_month('2010-01'))
     
