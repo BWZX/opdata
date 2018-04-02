@@ -426,14 +426,39 @@ def get_month(mdate):
     return T
 
 def get_ts_finance(code, period):
+    """period will be just 3d, 1w, 2w, 1m, 3m, 6m
+    
+    Arguments:
+        code {string} -- stock code
+        period {string} -- string present period
+    """    
+    df = get_finance(code)
+    if period =='3d':
+        return df[df.index%3==0]
+    
+    if period =='1w':
+        return df[df.index%5==0]
+
+    if period == '2w':
+        return df[df.index%10==0]
+
+    if period == '1m':
+        return df[df.index%22==0]
+
+    if period == '3m':
+        return df[df.index%64==0]
+    
+    if period == '6m':
+        return df[df.index%128==0]
     pass
     
 if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
     # _fetch_finance()
-    print(get_finance('000001'))
+    # print(get_finance('000001'))
     # print(get_local_future('A99'))
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
+    print(get_ts_finance('000001','1m'))
     
