@@ -509,6 +509,8 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         count {int} --a number presents the length of return list, default 10. 
         index {bool} -- default to be True, whether contain index in pool or not.
         args {dict}  -- dict of keyword, support rsi1, rsi2 etc
+    Returns:
+        list of dataframe,  end date, count
     """   
     temdate = start_date.split('-')
     date = temdate[0]+temdate[1]
