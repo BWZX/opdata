@@ -3,12 +3,15 @@ import json
 import pandas as pd
 import tushare as ts
 from datetime import datetime as dt
+from datetime import timedelta as td
+import calendar as cal
 import numpy as np
 import os
 from tqdm import tqdm
+import talib
 
-# from opdata.mongoconnet import *    
-from mongoconnet import *
+from opdata.mongoconnet import *    
+# from mongoconnet import *
 
 __T = ts.trade_cal()
 
@@ -238,6 +241,8 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
             return lastvalue
     cursor = finance.find({'code':str(code), 'date':{'$gte':'2004-01-01', '$lte': end_date}}).sort('date')
     df = pd.DataFrame(list(cursor))
+    if df.empty:
+        return df
     del df['_id']
     del df['code']
     T = __T    
@@ -333,7 +338,6 @@ def get_future(code, start_date='2009-10-01', end_date='2018-03-02'):
     return df  
 
 def __get_predictors(data):
-    import talib
     open_list = np.asarray(data["open"].tolist())
     close_list = np.asarray(data["close"].tolist())
     high_list = np.asarray(data["high"].tolist())
@@ -424,7 +428,7 @@ def get_month(mdate):
         T.loc[len(T)] = out
         #print(T)
     return T
-
+    
 def get_ts_finance(code, period):
     """period will be just 3d, 1w, 2w, 1m, 3m, 6m
     
@@ -451,7 +455,161 @@ def get_ts_finance(code, period):
     if period == '6m':
         return df[df.index%128==0]
     pass
+
+def __make_period__(period, start_date, end_date):
+    T = __T
+    T.rename(columns={'calendarDate':'date'}, inplace=True)    
+    if period =='3d':
+        T = T[T.index%3==0]
+        T = T[T.isOpen >0.5]
+        del T['isOpen']
+        T = T[T.date <= end_date]
+        return T
     
+    if period.endswith('w'):
+        # endtime = dt.strptime(end_date, '%Y-%m-%d')
+        # week = endtime.weekday()
+        # if week <4:
+        #     w = int(end_date[-2:])
+        #     w = w - week -3
+        #     end_date = end_date[:-2] + str(w)
+        
+        # starttime = dt.strptime(start_date, '%Y-%m-%d')
+        # week = starttime.weekday()
+        # if week == 5:
+        #     start_date = start_date[:-2] + str(int(start_date[-2:])+2)
+        # if week == 6:
+        #     start_date = start_date[:-2] + str(int(start_date[-2:])+1)
+        # if week in [1,2,3,4]:
+        #     stime = starttime - td(week,0,0)
+        #     start_date = dt.strftime(stime, '%Y-%m-%d')
+        T = T[T.date >= '2001-01-01'] # this date is monday
+        T = T.reset_index()
+        del T['index']        
+        T = T[T.index%7==4] #it will select the friday.
+        T = T[T.isOpen > 0.5]
+        del T['isOpen']
+        T = T[T.date <= end_date]
+        return T
+    
+    if period.endswith('m'):
+        T = ts.get_k_data('000001', ktype='M', index=True)[['date']]
+        T = T[T.date <= (end_date+'-31')]
+        return T
+
+def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
+    """get all factors within a stocks pool
+    
+    Arguments:
+        pool {string} -- pool name, such as 'hs300'        
+        period {string} -- a string indicates data period, could be one of them: nd, nw, nm
+        start_date {string} -- a string presents start time, for example: daily: '2012-01-01',
+            weekly: '2012-12-01', monthly: '2012-12'
+        factors {list} -- a list contain factors you want to get, default to get all.
+        count {int} --a number presents the length of return list, default 10. 
+        index {bool} -- default to be True, whether contain index in pool or not.
+        args {dict}  -- dict of keyword, support rsi1, rsi2 etc
+    """   
+    temdate = start_date.split('-')
+    date = temdate[0]+temdate[1]
+    if pool=='hs300' and 200607 <= int(date) <=201802:
+        pass
+    else:
+        print('data not in the range')
+        return    
+    dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'hs300.csv'))
+    if not index:
+        dfM = dfM[1:]
+    columns=['code', 'date', 'open', 'close', 'high', 'low', 'volume', 'momentum', 'adj_close', 'obv', 'rsi6', 'rsi12', 'sma3', 'ema6', 'ema12', 'atr14', 'mfi14', 'adx14', 'adx20', 'mom1', 'mom3', 'cci12', 'cci20', 'rocr3', 'rocr12', 'macd', 'macd_sig', 'macd_hist', 'willr', 'tsf10', 'tsf20', 'trix', 'bbandupper', 'bbandmiddle', 'bbandlower']
+    T = pd.DataFrame([], columns=columns)
+    thedate=''
+    nextdate=''
+    end_date=''
+    for d in dfM:
+        thedate = str(d)
+        if int(date) < int(d):
+            break
+    if thedate.endswith('01'):
+        nextdate=thedate[:-1] + '6'
+        end_date = nextdate[:4]+'-'+nextdate[4:]+'-'+'30'
+    else:
+        nextdate=thedate[:-2] + '12'
+        end_date = nextdate[:4]+'-'+nextdate[4:]+'-'+'31'
+    
+    outT=[]
+    for code in tqdm(dfM[thedate]):         
+        code = str(code)
+        if len(code) <6:
+            code = '000000'+code
+            code = code[-6:]
+        # print(code)        
+        df_price = get_day(code, '1995-01-01', end_date)
+        df_finance = get_finance(code, '1995-01-01', end_date)
+        #merge
+
+        if df_price.empty:
+            print('code {} has no data'.format(code))
+            continue
+
+        df = df_price.merge(df_finance, how='left', on ='date')
+
+        #make period
+        T = __make_period__(period, start_date, end_date)
+        df = df.merge(T,how='right', on = 'date')
+        df = df.reset_index()
+        del df['index']
+        PERIOD = int(period[:-1])
+        df = df[df.index%PERIOD==0]
+        df = df.reset_index()
+        del df['index']
+        del df['open']
+        del df['high']
+        del df['low']
+        del df['volume']
+        #calculate tech indicators
+        close_list = np.asarray(df["close"].tolist()) 
+        ind_dict={}       
+        ind_dict['rsi2'] = talib.RSI(close_list, timeperiod=(args.get('rsi2') or 12))
+        ind_dict['rsi1'] = talib.RSI(close_list, timeperiod=(args.get('rsi1') or 6))
+        ind_dict['sma1'] = talib.SMA(close_list, timeperiod=(args.get('sma1') or 3))
+        ind_dict['sma2'] = talib.SMA(close_list, timeperiod=(args.get('sma2') or 6))
+        ind_dict['ema1'] = talib.EMA(close_list, timeperiod=(args.get('ema1') or 6))
+        ind_dict['ema2'] = talib.EMA(close_list, timeperiod=(args.get('ema2') or 12))
+        ind_dict['mom1'] = talib.MOM(close_list, timeperiod=(args.get('mom1') or 1))
+        ind_dict['mom2'] = talib.MOM(close_list, timeperiod=(args.get('mom2') or 3))
+        ind_dict['rocr1'] = talib.ROCR(close_list, timeperiod=(args.get('rocr1') or 3))
+        ind_dict['rocr2'] = talib.ROCR(close_list, timeperiod=(args.get('rocr2') or 12))
+        ind_dict['macd'], ind_dict['macd_sig'], ind_dict['macd_hist'] = talib.MACD(close_list,\
+            fastperiod=(args.get('macd_fast') or 12), \
+            slowperiod=(args.get('macd_slow') or 26), signalperiod=(args.get('macd_signal') or 9))
+        ind_dict['tsf1'] = talib.TSF(close_list, timeperiod=(args.get('tsf1') or 10))
+        ind_dict['tsf2'] = talib.TSF(close_list, timeperiod=(args.get('tsf2') or 20))
+        ind_dict['trix1'] = talib.TRIX(close_list, timeperiod=(args.get('trix1') or 30))
+        ind_dict['trix2'] = talib.TRIX(close_list, timeperiod=(args.get('trix2') or 50))
+        ind_dict['bbandupper'], ind_dict['bbandmiddle'], ind_dict['bbandlower'] = \
+            talib.BBANDS(close_list,timeperiod=(args.get('bands_period') or 5), \
+            nbdevup=(args.get('bands_up') or 2), nbdevdn=(args.get('bands_dn') or 2), matype=(args.get('bands_ma') or 0))
+        
+        #pick up data
+        ind_df = pd.DataFrame(ind_dict)
+        rangedf = df[df.date> start_date]
+        rangelen = len(rangedf)  # the total output, list length of outT
+        for i in range(rangelen): #the nth output
+            c_dt = df.iloc[i].to_dict()
+            ind_dt = ind_df.iloc[-rangelen+i].to_dict()
+            dict_merge = dict(c_dt, **ind_dt)
+
+            if len(outT) ==0:
+                for jj in range(rangelen):
+                    outT.append(pd.DataFrame([],columns=dict_merge.keys()))
+            
+            outT[i].loc[len(outT[i])] = dict_merge
+    if len(factors)>0:
+        outT = outT[factors]
+    if count > 0 and count <= len(outT):
+        outT[0:count]
+    return outT, end_date, rangelen
+
 if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('002236','2007-08-05','2010-08-05'))
@@ -460,5 +618,6 @@ if __name__ == '__main__':
     # print(get_local_future('A99'))
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
-    print(get_ts_finance('000001','1m'))
+    # print(get_ts_finance('000001','1m'))
+    print(get_all('hs300','1w','2008-08-08', index=False))
     
