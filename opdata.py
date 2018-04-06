@@ -549,7 +549,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         df_finance = get_finance(code, '1995-01-01', end_date)
         #merge
 
-        if df_price.empty:
+        if df_price.empty or df_finance.empty:
             print('code {} has no data'.format(code))
             continue
 
