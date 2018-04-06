@@ -596,8 +596,10 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         ind_df = pd.DataFrame(ind_dict)
         rangedf = df[df.date> start_date]
         rangelen = len(rangedf)  # the total output, list length of outT
+        # rangedf = rangedf.reset_index()
+        # del rangedf['index']
         for i in range(rangelen): #the nth output
-            c_dt = df.iloc[i].to_dict()
+            c_dt = df.iloc[-rangelen+i].to_dict()
             ind_dt = ind_df.iloc[-rangelen+i].to_dict()
             dict_merge = dict(c_dt, **ind_dt)
 
