@@ -597,14 +597,15 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         ind_df = pd.DataFrame(ind_dict)
         if period.endswith('m'):
             start_date = start_date+'-01'
-        rangedf = df[df.date>= start_date]        
-        print(rangedf)
+        rangedf = df[df.date>= start_date]   
+        rangeind_df = ind_df[ind_df.date >= start_date]     
+        # print(rangedf)
         rangelen = len(rangedf)  # the total output, list length of outT
         # rangedf = rangedf.reset_index()
         # del rangedf['index']
         for i in range(rangelen): #the nth output
-            c_dt = df.iloc[-rangelen+i].to_dict()
-            ind_dt = ind_df.iloc[-rangelen+i].to_dict()
+            c_dt = rangedf.iloc[i].to_dict()
+            ind_dt = rangeind_df.iloc[i].to_dict()
             dict_merge = dict(c_dt, **ind_dt)
 
             if len(outT) ==0:
