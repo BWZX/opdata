@@ -597,7 +597,8 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         ind_df = pd.DataFrame(ind_dict)
         if period.endswith('m'):
             start_date = start_date+'-01'
-        rangedf = df[df.date>= start_date]
+        rangedf = df[df.date>= start_date]        
+        print(rangedf)
         rangelen = len(rangedf)  # the total output, list length of outT
         # rangedf = rangedf.reset_index()
         # del rangedf['index']
