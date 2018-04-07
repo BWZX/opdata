@@ -595,6 +595,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         
         #pick up data
         ind_df = pd.DataFrame(ind_dict)
+        ind_df['date'] = df.date
         if period.endswith('m'):
             start_date = start_date+'-01'
         rangedf = df[df.date>= start_date]   
