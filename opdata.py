@@ -14,6 +14,7 @@ from opdata.mongoconnet import *
 # from mongoconnet import *
 
 __T = ts.trade_cal()
+__TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
 
 def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
     # if not start_date:
@@ -493,7 +494,7 @@ def __make_period__(period, start_date, end_date):
         return T
     
     if period.endswith('m'):
-        T = ts.get_k_data('000001', ktype='M', index=True)[['date']]
+        T = __TM
         T = T[T.date <= (end_date+'-31')]
         return T
 
@@ -514,12 +515,12 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
     """   
     temdate = start_date.split('-')
     date = temdate[0]+temdate[1]
-    if pool=='hs300' and 200607 <= int(date) <=201802:
-        pass
-    else:
-        print('data not in the range')
-        return    
-    dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'hs300.csv'))
+    # if pool=='hs300' and 200607 <= int(date) <=201802:
+    #     pass
+    # else:
+    #     print('data not in the range')
+    #     return    
+    dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),pool+'.csv'))
     if not index:
         dfM = dfM[1:]
     columns=['code', 'date', 'open', 'close', 'high', 'low', 'volume', 'momentum', 'adj_close', 'obv', 'rsi6', 'rsi12', 'sma3', 'ema6', 'ema12', 'atr14', 'mfi14', 'adx14', 'adx20', 'mom1', 'mom3', 'cci12', 'cci20', 'rocr3', 'rocr12', 'macd', 'macd_sig', 'macd_hist', 'willr', 'tsf10', 'tsf20', 'trix', 'bbandupper', 'bbandmiddle', 'bbandlower']
@@ -594,7 +595,9 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         
         #pick up data
         ind_df = pd.DataFrame(ind_dict)
-        rangedf = df[df.date> start_date]
+        if period.endswith('m'):
+            start_date = start_date+'-01'
+        rangedf = df[df.date>= start_date]
         rangelen = len(rangedf)  # the total output, list length of outT
         # rangedf = rangedf.reset_index()
         # del rangedf['index']
