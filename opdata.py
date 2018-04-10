@@ -460,8 +460,8 @@ def get_ts_finance(code, period):
 def __make_period__(period, start_date, end_date):
     T = __T
     T.rename(columns={'calendarDate':'date'}, inplace=True)    
-    if period =='3d':
-        T = T[T.index%3==0]
+    if period.endswith('d'):
+        # T = T[T.index%int(period[:-1])==0]
         T = T[T.isOpen >0.5]
         del T['isOpen']
         T = T[T.date <= end_date]
@@ -498,6 +498,23 @@ def __make_period__(period, start_date, end_date):
         T = T[T.date <= (end_date+'-31')]
         return T
 
+def __parse_factors(factors):
+    """factors format: rsi_{arg}_{period}  or macd_{arg1}_{arg2}_{arg3}_{period}   
+    """
+
+    indicator = ['rsi', 'sma', 'ema', 'mom', 'rocr', 'macd', 'tsf', 'trix', 'bbandupper']
+    outT = {}
+    for f in factors:
+        k = f.split('_')
+        if k[0] in indicator:            
+            if outT.get(k[0]):
+                outT[k[0]].append(k[1:])
+            else:
+                outT[k[0]] = [k[1:]]
+    return outT
+
+
+
 def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
     """get all factors within a stocks pool
     
@@ -512,7 +529,8 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         args {dict}  -- dict of keyword, support rsi1, rsi2 etc
     Returns:
         list of dataframe,  end date, count
-    """   
+    """  
+    indicator_paras = __parse_factors(factors)
     temdate = start_date.split('-')
     date = temdate[0]+temdate[1]
     # if pool=='hs300' and 200607 <= int(date) <=201802:
