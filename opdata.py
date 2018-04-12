@@ -10,8 +10,8 @@ import os
 from tqdm import tqdm
 import talib
 
-from opdata.mongoconnet import *    
-# from mongoconnet import *
+# from opdata.mongoconnet import *    
+from mongoconnet import *
 
 __T = ts.trade_cal()
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
@@ -498,19 +498,23 @@ def __make_period__(period, start_date, end_date):
         T = T[T.date <= (end_date+'-31')]
         return T
 
-def __parse_factors(factors):
+def __parse_factors(factors, period):
     """factors format: rsi_{arg}_{period}  or macd_{arg1}_{arg2}_{arg3}_{period}   
     """
-
+    compare={'d':0, 'w':1, 'm':2}
     indicator = ['rsi', 'sma', 'ema', 'mom', 'rocr', 'macd', 'tsf', 'trix', 'bbandupper']
     outT = {}
     for f in factors:
         k = f.split('_')
+        if compare[k[-1][-1]] > compare[period[-1]]:
+            print('it will be confusion when the tech indicator has less data length than finance indicator.\n ignore this item.')
+            continue
         if k[0] in indicator:            
             if outT.get(k[0]):
                 outT[k[0]].append(k[1:])
             else:
                 outT[k[0]] = [k[1:]]
+                
     return outT
 
 
@@ -530,7 +534,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
     Returns:
         list of dataframe,  end date, count
     """  
-    indicator_paras = __parse_factors(factors)
+    indicator_paras = __parse_factors(factors, period)
     temdate = start_date.split('-')
     date = temdate[0]+temdate[1]
     # if pool=='hs300' and 200607 <= int(date) <=201802:
@@ -541,8 +545,8 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
     dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),pool+'.csv'))
     if not index:
         dfM = dfM[1:]
-    columns=['code', 'date', 'open', 'close', 'high', 'low', 'volume', 'momentum', 'adj_close', 'obv', 'rsi6', 'rsi12', 'sma3', 'ema6', 'ema12', 'atr14', 'mfi14', 'adx14', 'adx20', 'mom1', 'mom3', 'cci12', 'cci20', 'rocr3', 'rocr12', 'macd', 'macd_sig', 'macd_hist', 'willr', 'tsf10', 'tsf20', 'trix', 'bbandupper', 'bbandmiddle', 'bbandlower']
-    T = pd.DataFrame([], columns=columns)
+    # columns=['code', 'date', 'open', 'close', 'high', 'low', 'volume', 'momentum', 'adj_close', 'obv', 'rsi6', 'rsi12', 'sma3', 'ema6', 'ema12', 'atr14', 'mfi14', 'adx14', 'adx20', 'mom1', 'mom3', 'cci12', 'cci20', 'rocr3', 'rocr12', 'macd', 'macd_sig', 'macd_hist', 'willr', 'tsf10', 'tsf20', 'trix', 'bbandupper', 'bbandmiddle', 'bbandlower']
+    # T = pd.DataFrame([], columns=columns)
     thedate=''
     nextdate=''
     end_date=''
@@ -558,6 +562,13 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         end_date = nextdate[:4]+'-'+nextdate[4:]+'-'+'31'
     
     outT=[]
+
+    def name_tool(nlist):
+        kk=''
+        for it in nlist:
+            kk=kk+it+'_'
+        return kk[:-1]
+
     for code in tqdm(dfM[thedate]):         
         code = str(code)
         if len(code) <6:
@@ -588,50 +599,91 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         del df['low']
         del df['volume']
         #calculate tech indicators
-        close_list = np.asarray(df["close"].tolist()) 
-        ind_dict={}       
-        ind_dict['rsi2'] = talib.RSI(close_list, timeperiod=(args.get('rsi2') or 12))
-        ind_dict['rsi1'] = talib.RSI(close_list, timeperiod=(args.get('rsi1') or 6))
-        ind_dict['sma1'] = talib.SMA(close_list, timeperiod=(args.get('sma1') or 3))
-        ind_dict['sma2'] = talib.SMA(close_list, timeperiod=(args.get('sma2') or 6))
-        ind_dict['ema1'] = talib.EMA(close_list, timeperiod=(args.get('ema1') or 6))
-        ind_dict['ema2'] = talib.EMA(close_list, timeperiod=(args.get('ema2') or 12))
-        ind_dict['mom1'] = talib.MOM(close_list, timeperiod=(args.get('mom1') or 1))
-        ind_dict['mom2'] = talib.MOM(close_list, timeperiod=(args.get('mom2') or 3))
-        ind_dict['rocr1'] = talib.ROCR(close_list, timeperiod=(args.get('rocr1') or 3))
-        ind_dict['rocr2'] = talib.ROCR(close_list, timeperiod=(args.get('rocr2') or 12))
-        ind_dict['macd'], ind_dict['macd_sig'], ind_dict['macd_hist'] = talib.MACD(close_list,\
-            fastperiod=(args.get('macd_fast') or 12), \
-            slowperiod=(args.get('macd_slow') or 26), signalperiod=(args.get('macd_signal') or 9))
-        ind_dict['tsf1'] = talib.TSF(close_list, timeperiod=(args.get('tsf1') or 10))
-        ind_dict['tsf2'] = talib.TSF(close_list, timeperiod=(args.get('tsf2') or 20))
-        ind_dict['trix1'] = talib.TRIX(close_list, timeperiod=(args.get('trix1') or 30))
-        ind_dict['trix2'] = talib.TRIX(close_list, timeperiod=(args.get('trix2') or 50))
-        ind_dict['bbandupper'], ind_dict['bbandmiddle'], ind_dict['bbandlower'] = \
-            talib.BBANDS(close_list,timeperiod=(args.get('bands_period') or 5), \
-            nbdevup=(args.get('bands_up') or 2), nbdevdn=(args.get('bands_dn') or 2), matype=(args.get('bands_ma') or 0))
-        
+        # close_list = np.asarray(df["close"].tolist()) 
+        # ind_dict={}       
+        # ind_dict['rsi2'] = talib.RSI(close_list, timeperiod=(args.get('rsi2') or 12))
+        # ind_dict['rsi1'] = talib.RSI(close_list, timeperiod=(args.get('rsi1') or 6))
+        # ind_dict['sma1'] = talib.SMA(close_list, timeperiod=(args.get('sma1') or 3))
+        # ind_dict['sma2'] = talib.SMA(close_list, timeperiod=(args.get('sma2') or 6))
+        # ind_dict['ema1'] = talib.EMA(close_list, timeperiod=(args.get('ema1') or 6))
+        # ind_dict['ema2'] = talib.EMA(close_list, timeperiod=(args.get('ema2') or 12))
+        # ind_dict['mom1'] = talib.MOM(close_list, timeperiod=(args.get('mom1') or 1))
+        # ind_dict['mom2'] = talib.MOM(close_list, timeperiod=(args.get('mom2') or 3))
+        # ind_dict['rocr1'] = talib.ROCR(close_list, timeperiod=(args.get('rocr1') or 3))
+        # ind_dict['rocr2'] = talib.ROCR(close_list, timeperiod=(args.get('rocr2') or 12))
+        # ind_dict['macd'], ind_dict['macd_sig'], ind_dict['macd_hist'] = talib.MACD(close_list,\
+        #     fastperiod=(args.get('macd_fast') or 12), \
+        #     slowperiod=(args.get('macd_slow') or 26), signalperiod=(args.get('macd_signal') or 9))
+        # ind_dict['tsf1'] = talib.TSF(close_list, timeperiod=(args.get('tsf1') or 10))
+        # ind_dict['tsf2'] = talib.TSF(close_list, timeperiod=(args.get('tsf2') or 20))
+        # ind_dict['trix1'] = talib.TRIX(close_list, timeperiod=(args.get('trix1') or 30))
+        # ind_dict['trix2'] = talib.TRIX(close_list, timeperiod=(args.get('trix2') or 50))
+        # ind_dict['bbandupper'], ind_dict['bbandmiddle'], ind_dict['bbandlower'] = \
+        #     talib.BBANDS(close_list,timeperiod=(args.get('bands_period') or 5), \
+        #     nbdevup=(args.get('bands_up') or 2), nbdevdn=(args.get('bands_dn') or 2), matype=(args.get('bands_ma') or 0))
+        call_with_name ={
+            'rsi': talib.RSI,
+            'sma': talib.SMA,
+            'ema': talib.EMA,
+            'mom': talib.MOM,
+            'rocr': talib.ROCR,
+            'macd': talib.MACD,
+            'tsf': talib.TSF,
+            'trix': talib.TRIX,
+            'bbands':talib.BBANDS
+        }
+        period_dict = {}
+        # ind_dict = {}
+                
+        for ind in indicator_paras:
+            for cu in indicator_paras[ind]:
+                if not period_dict.get(cu[-1]):
+                    period_dict[cu[-1]] = __make_period__(cu[-1], start_date, end_date)
+                    period_dict[cu[-1]] = df_price.merge(period_dict[cu[-1]],how='right', on = 'date')
+                    close_list = np.asarray(period_dict[cu[-1]]["close"].tolist()) 
+                    column_name = name_tool([ind] + cu )
+                    if ind is not 'macd' or 'bbands':                        
+                        period_dict[cu[-1]][column_name] = call_with_name[ind](close_list, int(cu[0]))
+                    elif ind == 'macd':
+                        period_dict[cu[-1]][column_name], period_dict[cu[-1]][name_tool(['macdsig']+cu)],period_dict[cu[-1]][name_tool(['macdhist']+cu)] =\
+                            call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]))
+                    elif ind == 'bbands':
+                        period_dict[cu[-1]][name_tool(['bbandsupper']+cu)], period_dict[cu[-1]][name_tool(['bbandsmiddle']+cu)],period_dict[cu[-1]][name_tool(['bbandslower']+cu)] =\
+                            call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
+                else:
+                    close_list = np.asarray(period_dict[cu[-1]]["close"].tolist()) 
+                    column_name = name_tool([ind] + cu )
+                    if ind is not 'macd' or 'bbands':                        
+                        period_dict[cu[-1]][column_name] = call_with_name[ind](close_list, int(cu[0]))
+                    elif ind == 'macd':
+                        period_dict[cu[-1]][column_name], period_dict[cu[-1]][name_tool(['macdsig']+cu)],period_dict[cu[-1]][name_tool(['macdhist']+cu)] =\
+                            call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]))
+                    elif ind == 'bbands':
+                        period_dict[cu[-1]][name_tool(['bbandsupper']+cu)], period_dict[cu[-1]][name_tool(['bbandsmiddle']+cu)],period_dict[cu[-1]][name_tool(['bbandslower']+cu)] =\
+                            call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
+
+
         #pick up data
-        ind_df = pd.DataFrame(ind_dict)
-        ind_df['date'] = df.date
+        # ind_df = pd.DataFrame(ind_dict[cu[-1]])
+        # ind_df['date'] = df.date
         if period.endswith('m'):
             start_date = start_date+'-01'
         rangedf = df[df.date>= start_date]   
-        rangeind_df = ind_df[ind_df.date >= start_date]     
+        # rangeind_df = ind_df[ind_df.date >= start_date]     
         # print(rangedf)
         rangelen = len(rangedf)  # the total output, list length of outT
         # rangedf = rangedf.reset_index()
         # del rangedf['index']
-        for i in range(rangelen): #the nth output
-            c_dt = rangedf.iloc[i].to_dict()
-            ind_dt = rangeind_df.iloc[i].to_dict()
-            dict_merge = dict(c_dt, **ind_dt)
+        for per in period_dict:
+            rangedf = rangedf.merge(period_dict, how = 'left', on='date')
 
+        for i in range(rangelen): #the nth output
+            c_dt = rangedf.iloc[i].to_dict() 
             if len(outT) ==0:
                 for jj in range(rangelen):
-                    outT.append(pd.DataFrame([],columns=dict_merge.keys()))
+                    outT.append(pd.DataFrame([],columns=c_dt.keys()))
             
-            outT[i].loc[len(outT[i])] = dict_merge
+            outT[i].loc[len(outT[i])] = c_dt
     if len(factors)>0:
         outT = outT[factors]
     if count > 0 and count <= len(outT):
