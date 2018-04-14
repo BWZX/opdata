@@ -685,7 +685,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             
             outT[i].loc[len(outT[i])] = c_dt
     if len(factors)>0:
-        outT = outT[factors]
+        outT = outT[[factors]]
     if count > 0 and count <= len(outT):
         outT[0:count]
     return outT, end_date, rangelen
