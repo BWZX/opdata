@@ -10,8 +10,8 @@ import os
 from tqdm import tqdm
 import talib
 
-# from opdata.mongoconnet import *    
-from mongoconnet import *
+from opdata.mongoconnet import *    
+# from mongoconnet import *
 
 __T = ts.trade_cal()
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
@@ -675,7 +675,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         # rangedf = rangedf.reset_index()
         # del rangedf['index']
         for per in period_dict:
-            rangedf = rangedf.merge(period_dict, how = 'left', on='date')
+            rangedf = rangedf.merge(period_dict[per], how = 'left', on='date')
 
         for i in range(rangelen): #the nth output
             c_dt = rangedf.iloc[i].to_dict() 
