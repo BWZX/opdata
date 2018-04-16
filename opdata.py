@@ -685,7 +685,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             
             outT[i].loc[len(outT[i])] = c_dt
 
-    print(outT[0].columns)
+    # print(outT[0].columns)
     if len(factors)>0:
         factors = ['code', 'close_x', 'date'] + factors
         factors = list(set(factors))
