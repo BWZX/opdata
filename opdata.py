@@ -583,10 +583,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             print('code {} has no data'.format(code))
             continue
 
-        # if not df_finance.empty:
-        #     df = df_price.merge(df_finance, how='left', on ='date')
-        # else:
-        #     df = df_price
+        df = df_price.merge(df_finance, how='left', on ='date')
 
         #make period
         T = __make_period__(period, start_date, end_date)
