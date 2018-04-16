@@ -583,7 +583,10 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             print('code {} has no data'.format(code))
             continue
 
-        df = df_price.merge(df_finance, how='left', on ='date')
+        # if not df_finance.empty:
+        #     df = df_price.merge(df_finance, how='left', on ='date')
+        # else:
+        #     df = df_price
 
         #make period
         T = __make_period__(period, start_date, end_date)
@@ -684,7 +687,11 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     outT.append(pd.DataFrame([],columns=c_dt.keys()))
             
             outT[i].loc[len(outT[i])] = c_dt
+
+    print(outT[0].columns)
     if len(factors)>0:
+        factors = ['code', 'close_x', 'date'] + factors
+        factors = list(set(factors))
         for i in range(len(outT)):
             outT[i] = outT[i][factors]
     if count > 0 and count <= len(outT):
@@ -700,5 +707,5 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    print(get_all('hs300','1w','2008-08-08', index=False))
+    print(get_all('test','1w','2008-08-08', ['rsi_10_1d']))
     
