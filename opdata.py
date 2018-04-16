@@ -691,6 +691,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         factors = list(set(factors))
         for i in range(len(outT)):
             outT[i] = outT[i][factors]
+            outT[i].rename(columns={'close_x':'close'}, inplace = True)
     if count > 0 and count <= len(outT):
         outT[0:count]
     return outT, end_date, rangelen
