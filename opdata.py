@@ -636,8 +636,8 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         # ind_dict = {}
                 
         for ind in indicator_paras:
-            for cu in indicator_paras[ind]:
-                if len(period_dict.get(cu[-1]))<=0:
+            for cu in indicator_paras[ind]:                
+                if type(period_dict.get(cu[-1])) == type(period_dict.get('nothing')):
                     period_dict[cu[-1]] = __make_period__(cu[-1], start_date, end_date)
                     period_dict[cu[-1]] = df_price.merge(period_dict[cu[-1]],how='right', on = 'date')
                     close_list = np.asarray(period_dict[cu[-1]]["close"].tolist()) 
