@@ -50,4 +50,7 @@ if __name__ == '__main__':
     # stolist.sort()
     # with open('stolist.py','w') as f:
     #     f.write(str(stolist))
-    print(stolist)
+    # print(stolist)200607,201801
+    with open('allstocks.csv', 'w') as f:
+        for it in stolist:
+            f.write(it+','+it+'\n')
