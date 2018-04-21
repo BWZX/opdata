@@ -690,6 +690,12 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         factors = ['code', 'close_x', 'date'] + factors
         factors = list(set(factors))
         for i in range(len(outT)):
+            bbool=True
+            for it in factors:
+                if type(outT[i].get(it)) == type(outT[i].get('nthing')):
+                    bbool = False
+            if not bbool:
+                continue
             outT[i] = outT[i][factors]
             outT[i].rename(columns={'close_x':'close'}, inplace = True)
     if count > 0 and count <= len(outT):
