@@ -505,11 +505,11 @@ def __parse_factors(factors, period):
     indicator = ['rsi', 'sma', 'ema', 'mom', 'rocr', 'macd', 'tsf', 'trix', 'bbandupper']
     outT = {}
     for f in factors:
-        k = f.split('_')
-        if compare[k[-1][-1]] > compare[period[-1]]:
-            print('it will be confusion when the tech indicator has less data length than finance indicator.\n ignore this item.')
-            continue
-        if k[0] in indicator:            
+        k = f.split('_')        
+        if k[0] in indicator: 
+            if compare[k[-1][-1]] > compare[period[-1]]:
+                print('it will be confusion when the tech indicator has less data length than finance indicator.\n ignore this item.')
+                continue           
             if outT.get(k[0]):
                 outT[k[0]].append(k[1:])
             else:
