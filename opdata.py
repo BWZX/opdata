@@ -10,8 +10,8 @@ import os
 from tqdm import tqdm
 import talib
 
-from opdata.mongoconnet import *    
-# from mongoconnet import *
+# from opdata.mongoconnect import *    
+from mongoconnect import *
 
 __T = ts.trade_cal()
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
@@ -753,7 +753,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('test','1w','2008-08-08', ['rsi_10_1d','rsi_10_3d'])[0]
+    re = get_all('test','1d','2008-08-08', ['rsi_10_1d','rsi_10_3d'])[0]
     print(re)
     # print(re[1])
     # print(re[2])    
