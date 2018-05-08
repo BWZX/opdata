@@ -3,39 +3,68 @@ from mongoconnect import *
 import opdata
 import pandas as pd
 
-def JP_VALUATION_FINACE(code, start_date, end_date):
+def JP_VALUATION_FINANCE(code, start_date='2008-01-01', end_date='2017-12-31'):
     cursor = financetable.find({'code':code}).sort('date')
     opcf = pd.DataFrame(list(cursor))
-
+    del opcf['_id']
+    # print(opcf['net_raise_cf'])
+    lastvalue = 0
     def setValue(v):
         nonlocal lastvalue
-        if pd.isnull(v) or v == 'None' or v == '--':
+        if pd.isnull(v) or v == 'None' or v == '--' or v=='nan':
             return lastvalue
         else:
             lastvalue = v
             return lastvalue
-    
+    commaEliminate = lambda x: str(x).replace(',','')
     T = opdata.__T
     T.rename(columns={'calendarDate':'date'}, inplace=True)
     T = T[T.date > '2003-01-01']
     T=T.merge(opcf,on='date',how='left')
-    T=T.drop_duplicates(['date'])
-    for column in T:
-        if column != 'code' and column != 'date':
+    T=T.drop_duplicates(['date'])   
+    for column in opcf:
+        T[column]=T[column].apply(commaEliminate) 
+    for column in opcf:
+        if opcf.iloc[0][column] != '--':
+            lastvalue = str(opcf.iloc[0][column]).replace(',','')
+        else:
+            lastvalue = '0'       
+        
+        if column != 'code' and column != 'date': 
+            T[column]=T[column].apply(setValue)         
             try:
                 T[[column]] = T[[column]].astype(float)
             except ValueError:
-                pass            
-            lastvalue = 0.0
-            T[column]=T[column].apply(setValue)
-
+                pass   
     T = T[T.isOpen >0.5]
     T = T[T.date >= start_date]
     T = T[T.date <= end_date]
     T['code']=str(code)
     del T['isOpen']
-
+    # print(T)
     price = opdata.get_day(code, start_date, end_date)
+    # print(price)
+    # print(T)
+    out = pd.DataFrame()
+    out['code'] = price['code']
+    out['date'] = price['date']
+    print(T['total_profit'].div(price['close'], axis = 0))
+    out['SY'] = T['total_profit'].div(price['close'], axis = 0)
+    
+    out['BVY'] = T['net_asset_ps'].div(price['close'], axis = 0)
+    # print(T['net_raise_cf'], T['total_assets'])
+    out['CF2TA'] = T['net_raise_cf'].div(T['total_assets'], axis = 0)
+    out['CF2TA'] = out['CF2TA'] + T['net_invest_cf'].div(T['total_assets'] , axis = 0)
+    out['CF2TA'] = out['CF2TA'] + T['net_op_cf'].div(T['total_assets'], axis = 0)
+    
+    out['EBITDA2TA'] = T['total_profit'].div(T['total_assets'], axis = 0)
+    out['EBITDA2TA'] = out['EBITDA2TA'] + T['amortization'].div(T['total_assets'], axis = 0)
+    out['EBITDA2TA'] = out['EBITDA2TA'] +T['depreciation'].div(T['total_assets'], axis = 0)
+    out['EBITDA2TA'] = out['EBITDA2TA'] + T['long_term_amortization'].div(T['total_assets'], axis = 0)
+    out['EBITDA2TA'] = out['EBITDA2TA'] + T['pay_intest'].div(T['total_assets'], axis = 0)
+    out['EBT2TA'] = T['op_income']
+    print(out['EBT2TA'], T['op_income'])
 
 
-
+if __name__ == '__main__':
+    JP_VALUATION_FINANCE('000001')
