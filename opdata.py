@@ -63,6 +63,8 @@ def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
     del T['isOpen']
     T = T.reset_index()
     del T['index']
+    del T['code'] 
+    T['code'] = code
     return T        
     
 
@@ -228,7 +230,7 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     del df['code']
     T = __T    
     T.rename(columns={'calendarDate':'date'}, inplace=True)
-    T = T[T.date > '2003-01-01']
+    # T = T[T.date > '2003-01-01']
     T=T.merge(df,on='date',how='left')
     T=T.drop_duplicates(['date'])
     for column in T:
@@ -240,15 +242,6 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
             lastvalue = 0.0
             T[column]=T[column].apply(setValue)
             
-    # T[['bvps']] = T[['bvps']].astype(float)
-    # T[['epcf']] = T[['epcf']].astype(float)  
-    # T[['eps']] = T[['eps']].astype(float)
-    # lastvalue = 0.0
-    # T['bvps']=T['bvps'].apply(setValue)
-    # lastvalue = 0.0
-    # T['epcf']=T['epcf'].apply(setValue)
-    # lastvalue = 0.0
-    # T['eps']=T['eps'].apply(setValue)
     T = T[T.isOpen >0.5]
     T = T[T.date >= start_date]
     T = T[T.date <= end_date]
@@ -526,8 +519,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
     dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),pool+'.csv'))
     if not index:
         dfM = dfM[1:]
-    # columns=['code', 'date', 'open', 'close', 'high', 'low', 'volume', 'momentum', 'adj_close', 'obv', 'rsi6', 'rsi12', 'sma3', 'ema6', 'ema12', 'atr14', 'mfi14', 'adx14', 'adx20', 'mom1', 'mom3', 'cci12', 'cci20', 'rocr3', 'rocr12', 'macd', 'macd_sig', 'macd_hist', 'willr', 'tsf10', 'tsf20', 'trix', 'bbandupper', 'bbandmiddle', 'bbandlower']
-    # T = pd.DataFrame([], columns=columns)
+
     thedate=''
     nextdate=''
     end_date=''
@@ -543,6 +535,10 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         end_date = nextdate[:4]+'-'+nextdate[4:]+'-'+'31'
     
     outT=[]
+    def drop_y(df):
+        # list comprehension of the cols that end with '_y'
+        to_drop = [x for x in df if x.endswith('_y')]
+        df.drop(to_drop, axis=1, inplace=True)
 
     def name_tool(nlist):
         kk=''
@@ -550,14 +546,14 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             kk=kk+it+'_'
         return kk[:-1]
 
-    all_columns=['date', 'close', 'code_x', 'high', 'low', 'name', 'open', 'volume',\
-       'adratio', 'arturndays', 'arturnover', 'bips', 'business_income',\
-       'bvps', 'cashflowratio', 'cashratio', 'cf_liabilities', 'cf_nm',\
-       'cf_sales', 'currentasset_days', 'currentasset_turnover',\
-       'currentratio', 'epcf', 'eps', 'epsg', 'gross_profit_rate', 'icratio',\
-       'inventory_turnover', 'mbrg', 'nav', 'net_profit_ratio', 'net_profits',\
-       'nprg', 'quickratio', 'rateofreturn', 'roe', 'seg', 'sheqratio',\
-       'code_y']
+    all_columns=['cashratio', 'name', 'currentasset_days', 'adratio', \
+        'roe', 'net_profits', 'icratio', 'open', 'close', 'volume', 'currentasset_turnover', \
+        'nav', 'gross_profit_rate', 'BVY', 'epsg', 'date', 'CF2TA', 'SY', 'currentratio', \
+        'sheqratio','bvps','high', 'cashflowratio', 'inventory_turnover', \
+        'rateofreturn', 'seg', 'cf_liabilities', 'cf_nm', 'arturndays', 'epcf', 'code', \
+        'mbrg', 'nprg', 'business_income', 'EBT2TA', 'cf_sales', 'eps', 'arturnover', \
+        'net_profit_ratio', 'EBITDA2TA', 'quickratio', 'bips', 'low']
+
     for code in tqdm(dfM[thedate]):         
         code = str(code)
         print(code)
@@ -570,29 +566,29 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             df_price['name'] = 'sh300'
         df_finance = get_finance(code, '1995-01-01', end_date)
         jp_finance = _factors.JP_VALUATION_FINANCE(code,'1995-01-01',end_date)
+
         #merge
-
-
         if df_price.empty:
             # print('code {} has no data'.format(code))
             continue
-        if not jp_finance.empty:
-            df = df_price.merge(jp_finance, how='left', on ='date', copy=False)
-
         if not df_finance.empty:
-            df = df_price.merge(df_finance, how='left', on ='date', copy=False)
-
+            df = df_price.merge(df_finance, how='left', on ='date', suffixes=('', '_y'))
+            drop_y(df)
         else:
             df = df_price.copy()
-            t_columns=list(df.columns)
-            for it in all_columns:
-                if it in t_columns:
-                    continue
-                else:
-                    df[it]=np.nan
-            del df['code']
+        if not jp_finance.empty:
+            df = df.merge(jp_finance, how='left', on ='date', suffixes=('', '_y'))
+            drop_y(df)
+        
+        t_columns=list(df.columns)
+        for it in all_columns:
+            if it in t_columns:
+                continue
+            else:
+                df[it]=np.nan
+        
         T = __make_period__(period, start_date, end_date)
-        df = df.merge(T,how='right', on = 'date', copy=False)
+        df = df.merge(T,how='right', on = 'date', suffixes=('', '_y'))
         df = df.reset_index()
         del df['index']
         PERIOD = int(period[:-1])
@@ -615,13 +611,11 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             'bbands':talib.BBANDS
         }
         period_dict = {}
-        # ind_dict = {}
-                
-        for ind in indicator_paras:
+        for ind in indicator_paras:   #exp: {'rsi': [['10', '1d'], ['10', '3d']]}
             for cu in indicator_paras[ind]:                
                 if type(period_dict.get(cu[-1])) == type(period_dict.get('nothing')):                    
                     period_dict[cu[-1]] = __make_period__(cu[-1], start_date, end_date)
-                    period_dict[cu[-1]] = df_price.merge(period_dict[cu[-1]],how='right', on = 'date', copy=False)
+                    period_dict[cu[-1]] = period_dict[cu[-1]].merge(df_price,how='left', on = 'date', suffixes=('', '_y'))
                     close_list = np.asarray(period_dict[cu[-1]]["close"].tolist()) 
                     column_name = name_tool([ind] + cu )
                     if ind is not 'macd' or 'bbands':                        
@@ -643,27 +637,22 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     elif ind == 'bbands':
                         period_dict[cu[-1]][name_tool(['bbandsupper']+cu)], period_dict[cu[-1]][name_tool(['bbandsmiddle']+cu)],period_dict[cu[-1]][name_tool(['bbandslower']+cu)] =\
                             call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
-
-
         #pick up data
         if period.endswith('m'):
             start_date = start_date+'-01'
         rangedf = df[df.date>= start_date]  
-        print(rangedf) 
         rangelen = len(rangedf)  # the total output, list length of outT
         for per in period_dict:
-            rangedf = rangedf.merge(period_dict[per], how = 'left', on='date')
-
+            rangedf = rangedf.merge(period_dict[per], how = 'left', on='date', copy = False, suffixes=('', '_y'))
+            drop_y(rangedf)
         for i in range(rangelen): #the nth output
             c_dt = rangedf.iloc[i].to_dict() 
             if len(outT) ==0:
                 for jj in range(rangelen):
                     outT.append(pd.DataFrame([],columns=c_dt.keys()))
-            print(c_dt.keys())
             outT[i].loc[len(outT[i])] = c_dt
-
     if len(factors)>=0:
-        factors = ['code_x', 'close_x', 'date'] + factors
+        factors = ['code', 'close', 'date'] + factors
         factors = list(set(factors))
         for i in range(len(outT)):            
             for it in factors:
@@ -671,12 +660,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                 if co_names.count(it) == 0:
                     t = factors.index(it)
                     factors = factors[:t] + factors[t+1:]                  
-            # print(factors)
             outT[i] = outT[i][factors]
-            # print(outT[i].columns)
-            # print('hihihihihi')
-            outT[i].rename(columns={'code_x':'code'}, inplace = True)
-            outT[i].rename(columns={'close_x':'close'}, inplace = True)
     if count > 0 and count <= len(outT):
         outT[0:count]
     return outT, end_date, rangelen
