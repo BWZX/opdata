@@ -10,6 +10,8 @@ import os
 from tqdm import tqdm
 import talib
 
+# import opdata.factors as _factors
+import factors as _factors
 # from opdata.mongoconnect import *    
 from mongoconnect import *
 
@@ -273,6 +275,8 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     T = T[T.date >= start_date]
     T = T[T.date <= end_date]
     T['code']=str(code)
+    T = T.reset_index()
+    del T['index']
     del T['isOpen']
     return T
 
@@ -593,11 +597,16 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         if code == 'sh000300':
             df_price['name'] = 'sh300'
         df_finance = get_finance(code, '1995-01-01', end_date)
+        jp_finance = _factors.JP_VALUATION_FINANCE(code,'1995-01-01',end_date)
         #merge
+
 
         if df_price.empty:
             # print('code {} has no data'.format(code))
             continue
+
+        df = df_price.merge(jp_finance, how='left', on ='date', copy=False)
+
         if not df_finance.empty:
             df = df_price.merge(df_finance, how='left', on ='date', copy=False)
             # print('\nnormal:')
@@ -631,29 +640,6 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         del df['high']
         del df['low']
         del df['volume']
-        #calculate tech indicators
-        # close_list = np.asarray(df["close"].tolist()) 
-        # ind_dict={}       
-        # ind_dict['rsi2'] = talib.RSI(close_list, timeperiod=(args.get('rsi2') or 12))
-        # ind_dict['rsi1'] = talib.RSI(close_list, timeperiod=(args.get('rsi1') or 6))
-        # ind_dict['sma1'] = talib.SMA(close_list, timeperiod=(args.get('sma1') or 3))
-        # ind_dict['sma2'] = talib.SMA(close_list, timeperiod=(args.get('sma2') or 6))
-        # ind_dict['ema1'] = talib.EMA(close_list, timeperiod=(args.get('ema1') or 6))
-        # ind_dict['ema2'] = talib.EMA(close_list, timeperiod=(args.get('ema2') or 12))
-        # ind_dict['mom1'] = talib.MOM(close_list, timeperiod=(args.get('mom1') or 1))
-        # ind_dict['mom2'] = talib.MOM(close_list, timeperiod=(args.get('mom2') or 3))
-        # ind_dict['rocr1'] = talib.ROCR(close_list, timeperiod=(args.get('rocr1') or 3))
-        # ind_dict['rocr2'] = talib.ROCR(close_list, timeperiod=(args.get('rocr2') or 12))
-        # ind_dict['macd'], ind_dict['macd_sig'], ind_dict['macd_hist'] = talib.MACD(close_list,\
-        #     fastperiod=(args.get('macd_fast') or 12), \
-        #     slowperiod=(args.get('macd_slow') or 26), signalperiod=(args.get('macd_signal') or 9))
-        # ind_dict['tsf1'] = talib.TSF(close_list, timeperiod=(args.get('tsf1') or 10))
-        # ind_dict['tsf2'] = talib.TSF(close_list, timeperiod=(args.get('tsf2') or 20))
-        # ind_dict['trix1'] = talib.TRIX(close_list, timeperiod=(args.get('trix1') or 30))
-        # ind_dict['trix2'] = talib.TRIX(close_list, timeperiod=(args.get('trix2') or 50))
-        # ind_dict['bbandupper'], ind_dict['bbandmiddle'], ind_dict['bbandlower'] = \
-        #     talib.BBANDS(close_list,timeperiod=(args.get('bands_period') or 5), \
-        #     nbdevup=(args.get('bands_up') or 2), nbdevdn=(args.get('bands_dn') or 2), matype=(args.get('bands_ma') or 0))
         call_with_name ={
             'rsi': talib.RSI,
             'sma': talib.SMA,

@@ -45,13 +45,18 @@ def JP_VALUATION_FINANCE(code, start_date='2008-01-01', end_date='2017-12-31'):
     price = opdata.get_day(code, start_date, end_date)
     # print(price)
     # print(T)
+    T=T.reset_index()
+    price=price.reset_index()
+    # print(price)
     out = pd.DataFrame()
     out['code'] = price['code']
     out['date'] = price['date']
-    print(T['total_profit'].div(price['close'], axis = 0))
-    out['SY'] = T['total_profit'].div(price['close'], axis = 0)
+    # print(price)
     
+    out['SY'] = T['total_profit'].div(price['close'], axis = 0)
+    # print(out)
     out['BVY'] = T['net_asset_ps'].div(price['close'], axis = 0)
+    
     # print(T['net_raise_cf'], T['total_assets'])
     out['CF2TA'] = T['net_raise_cf'].div(T['total_assets'], axis = 0)
     out['CF2TA'] = out['CF2TA'] + T['net_invest_cf'].div(T['total_assets'] , axis = 0)
@@ -63,7 +68,9 @@ def JP_VALUATION_FINANCE(code, start_date='2008-01-01', end_date='2017-12-31'):
     out['EBITDA2TA'] = out['EBITDA2TA'] + T['long_term_amortization'].div(T['total_assets'], axis = 0)
     out['EBITDA2TA'] = out['EBITDA2TA'] + T['pay_intest'].div(T['total_assets'], axis = 0)
     out['EBT2TA'] = T['op_income']
-    print(out['EBT2TA'], T['op_income'])
+    # print(out['EBT2TA'], T['op_income'])
+    # print(out)
+    return out
 
 
 if __name__ == '__main__':
