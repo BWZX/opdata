@@ -61,26 +61,10 @@ def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
     T = T[T.date >= start_date]
     T = T[T.date <= end_date]
     del T['isOpen']
-    return T    
+    T = T.reset_index()
+    del T['index']
+    return T        
     
-    # del df['_id']
-    # firstdate=df.loc[0].date
-    # t=__T[(__T.isOpen==1)&(__T.calendarDate>=firstdate)&(__T.calendarDate<=end_date)]   
-    # t.columns=['date','isOpen']
-    # r=pd.merge(df,t,on='date',how='right')
-    # r=r.sort_values('date').reset_index()
-    # del r['index']
-    # del r['isOpen']
-    # # print(r)
-    # k=r.isnull()
-    # k=list(k[k.open==True].index)
-    # k.sort()
-    # ii=list(r.columns).index('date')
-    # for i in k:
-    #     date=r.iloc[i].date
-    #     r.iloc[i]=r.iloc[i-1]
-    #     r.iat[i, ii] = date    
-    # return r
 
 def macrodata(start=None, end=None):
     """macroeconomics data : Shibor | Reserve Ratio | M2 | GDP | CPI | Loan Rate.
@@ -159,13 +143,6 @@ def macrodata(start=None, end=None):
         cpi = cpi[cpi.date > 2006.6]
     cpi['date']=cpi['date'].apply(makeDate)
 
-    # shibor=ts.shibor_data(2006)[['date','ON']]
-    # for y in range(2007,2018):
-    #     shibor=pd.merge(shibor,ts.shibor_d
-    # ata(y)[['date','ON']],'outer')
-    # shibor.rename(columns={'ON':'shibor'}, inplace=True)
-    # shibor[['date']] = shibor[['date']].astype(str)
-
     lastvalue = 0.0
     def setValue(v):
         nonlocal lastvalue
@@ -208,7 +185,8 @@ def macrodata(start=None, end=None):
     T[['rate']] = T[['rate']].astype(float)
     T[['gdp']] = T[['gdp']].astype(float)
     T[['cpi']] = T[['cpi']].astype(float)
-
+    T = T.reset_index()
+    del T['index']
     return T
 
 def _fetch_finance():
@@ -527,8 +505,6 @@ def __parse_factors(factors, period):
                 
     return outT
 
-
-
 def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
     """get all factors within a stocks pool
     
@@ -547,11 +523,6 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
     indicator_paras = __parse_factors(factors, period)
     temdate = start_date.split('-')
     date = temdate[0]+temdate[1]
-    # if pool=='hs300' and 200607 <= int(date) <=201802:
-    #     pass
-    # else:
-    #     print('data not in the range')
-    #     return    
     dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),pool+'.csv'))
     if not index:
         dfM = dfM[1:]
@@ -589,6 +560,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
        'code_y']
     for code in tqdm(dfM[thedate]):         
         code = str(code)
+        print(code)
         if len(code) <6:
             code = '000000'+code
             code = code[-6:]
@@ -604,14 +576,11 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         if df_price.empty:
             # print('code {} has no data'.format(code))
             continue
-
-        df = df_price.merge(jp_finance, how='left', on ='date', copy=False)
+        if not jp_finance.empty:
+            df = df_price.merge(jp_finance, how='left', on ='date', copy=False)
 
         if not df_finance.empty:
             df = df_price.merge(df_finance, how='left', on ='date', copy=False)
-            # print('\nnormal:')
-            # print(df_price)
-            # print(df.columns)
 
         else:
             df = df_price.copy()
@@ -621,13 +590,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     continue
                 else:
                     df[it]=np.nan
-            # print('\nunormal')
             del df['code']
-            # print(df_price)
-            # print(df.columns)
-        # continue
-
-        #make period
         T = __make_period__(period, start_date, end_date)
         df = df.merge(T,how='right', on = 'date', copy=False)
         df = df.reset_index()
@@ -669,8 +632,6 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     elif ind == 'bbands':
                         period_dict[cu[-1]][name_tool(['bbandsupper']+cu)], period_dict[cu[-1]][name_tool(['bbandsmiddle']+cu)],period_dict[cu[-1]][name_tool(['bbandslower']+cu)] =\
                             call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
-
-                    # print(period_dict)
                 else:
                     close_list = np.asarray(period_dict[cu[-1]]["close"].tolist()) 
                     column_name = name_tool([ind] + cu )
@@ -685,16 +646,11 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
 
 
         #pick up data
-        # ind_df = pd.DataFrame(ind_dict[cu[-1]])
-        # ind_df['date'] = df.date
         if period.endswith('m'):
             start_date = start_date+'-01'
-        rangedf = df[df.date>= start_date]   
-        # rangeind_df = ind_df[ind_df.date >= start_date]     
-        # print(rangedf)
+        rangedf = df[df.date>= start_date]  
+        print(rangedf) 
         rangelen = len(rangedf)  # the total output, list length of outT
-        # rangedf = rangedf.reset_index()
-        # del rangedf['index']
         for per in period_dict:
             rangedf = rangedf.merge(period_dict[per], how = 'left', on='date')
 
@@ -703,17 +659,12 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             if len(outT) ==0:
                 for jj in range(rangelen):
                     outT.append(pd.DataFrame([],columns=c_dt.keys()))
-                    # print(outT)
-            
-            # print(c_dt.keys())
+            print(c_dt.keys())
             outT[i].loc[len(outT[i])] = c_dt
 
-    # print(outT[0].columns)
-    # print(factors)
     if len(factors)>=0:
         factors = ['code_x', 'close_x', 'date'] + factors
         factors = list(set(factors))
-        # print(len(outT),'  iiiiiiiiiiiiii')
         for i in range(len(outT)):            
             for it in factors:
                 co_names = list(outT[i].columns)

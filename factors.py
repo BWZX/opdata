@@ -6,6 +6,8 @@ import pandas as pd
 def JP_VALUATION_FINANCE(code, start_date='2008-01-01', end_date='2017-12-31'):
     cursor = financetable.find({'code':code}).sort('date')
     opcf = pd.DataFrame(list(cursor))
+    if opcf.empty:
+        return opcf
     del opcf['_id']
     # print(opcf['net_raise_cf'])
     lastvalue = 0
