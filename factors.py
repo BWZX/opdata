@@ -3,7 +3,7 @@ from mongoconnect import *
 import opdata
 import pandas as pd
 
-def JP_VALUATION_FINANCE(code, start_date='2008-01-01', end_date='2017-12-31'):
+def JP_VALUATION_FINANCE(code, start_date='2009-01-01', end_date='2017-12-31'):
     cursor = financetable.find({'code':code}).sort('date')
     opcf = pd.DataFrame(list(cursor))
     if opcf.empty:
@@ -21,7 +21,7 @@ def JP_VALUATION_FINANCE(code, start_date='2008-01-01', end_date='2017-12-31'):
     commaEliminate = lambda x: str(x).replace(',','')
     T = opdata.__T
     T.rename(columns={'calendarDate':'date'}, inplace=True)
-    T = T[T.date > '2003-01-01']
+    # T = T[T.date > '2003-01-01']
     T=T.merge(opcf,on='date',how='left')
     T=T.drop_duplicates(['date'])   
     for column in opcf:
@@ -53,6 +53,8 @@ def JP_VALUATION_FINANCE(code, start_date='2008-01-01', end_date='2017-12-31'):
     out = pd.DataFrame()
     out['code'] = price['code']
     out['date'] = price['date']
+    # print(out)
+    # print(T)
     # print(price)
     
     out['SY'] = T['total_profit'].div(price['close'], axis = 0)
@@ -76,4 +78,5 @@ def JP_VALUATION_FINANCE(code, start_date='2008-01-01', end_date='2017-12-31'):
 
 
 if __name__ == '__main__':
-    JP_VALUATION_FINANCE('000001')
+    dff=JP_VALUATION_FINANCE('000012')
+    print(dff[dff.date == '2015-03-05'])

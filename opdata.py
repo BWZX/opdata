@@ -66,7 +66,6 @@ def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
     del T['code'] 
     T['code'] = code
     return T        
-    
 
 def macrodata(start=None, end=None):
     """macroeconomics data : Shibor | Reserve Ratio | M2 | GDP | CPI | Loan Rate.
@@ -251,12 +250,10 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     del T['isOpen']
     return T
 
-
 # __INDUSTRY_CLASSIFIED = ts.get_industry_classified()
 # __CONCEPT_CLASSIFIED = ts.get_concept_classified()
 # get_industry = lambda code:__INDUSTRY_CLASSIFIED[__INDUSTRY_CLASSIFIED.code==code].iloc[0].c_name 
 # get_concept = lambda code:__CONCEPT_CLASSIFIED[__CONCEPT_CLASSIFIED.code==code].iloc[0].c_name   
-
 
 def get_local_future(code, start_date='2009-10-01', end_date='2018-03-02'):
     # if not start_date:
@@ -566,19 +563,21 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             df_price['name'] = 'sh300'
         df_finance = get_finance(code, '1995-01-01', end_date)
         jp_finance = _factors.JP_VALUATION_FINANCE(code,'1995-01-01',end_date)
-
+        # print(jp_finance)
+        # exit()
         #merge
         if df_price.empty:
             # print('code {} has no data'.format(code))
             continue
         if not df_finance.empty:
             df = df_price.merge(df_finance, how='left', on ='date', suffixes=('', '_y'))
-            drop_y(df)
+            drop_y(df)            
         else:
             df = df_price.copy()
         if not jp_finance.empty:
             df = df.merge(jp_finance, how='left', on ='date', suffixes=('', '_y'))
             drop_y(df)
+            print(df[df.date>'2008-01-08'])
         
         t_columns=list(df.columns)
         for it in all_columns:
