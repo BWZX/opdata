@@ -10,10 +10,10 @@ import os
 from tqdm import tqdm
 import talib
 
-# import opdata.factors as _factors
-import factors as _factors
-# from opdata.mongoconnect import *    
-from mongoconnect import *
+from opdata import factors as _factors
+# import factors as _factors
+from opdata.mongoconnect import *    
+# from mongoconnect import *
 
 __T = ts.trade_cal()
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
@@ -556,7 +556,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
 
     for code in tqdm(dfM[thedate]):         
         code = str(code)
-        print(code)
+        # print(code)
         if len(code) <6:
             code = '000000'+code
             code = code[-6:]
@@ -611,40 +611,68 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             'bbands':talib.BBANDS
         }
         period_dict = {}
-        for ind in indicator_paras:   #exp: {'rsi': [['10', '1d'], ['10', '3d']]}
+        rangedf = df[df.date>= start_date]  
+        ta_indicators = pd.DataFrame()
+        ta_indicators['date'] = rangedf['date']
+        for ind in indicator_paras:   #exp: {'rsi': [['10d', '1d'], ['10d', '3d']]}
             for cu in indicator_paras[ind]:                
                 if type(period_dict.get(cu[-1])) == type(period_dict.get('nothing')):                    
                     period_dict[cu[-1]] = __make_period__(cu[-1], start_date, end_date)
                     period_dict[cu[-1]] = period_dict[cu[-1]].merge(df_price,how='left', on = 'date', suffixes=('', '_y'))
-                    close_list = np.asarray(period_dict[cu[-1]]["close"].tolist()) 
-                    column_name = name_tool([ind] + cu )
+                
+                column_name = name_tool([ind] + cu )
+                column_name_ex0 = ''
+                column_name_ex1 = ''
+                ta_normal_list = []
+                ta_normal_list1 = []
+                ta_normal_list2 = []
+                for currentdate in ta_indicators['date']:
+                    close_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['close']
+                    close_dt.append(df_price[df_price.date == currentdate]['close'])
+                    close_list = np.asarray(close_dt.tolist()) 
                     if ind is not 'macd' or 'bbands':                        
-                        period_dict[cu[-1]][column_name] = call_with_name[ind](close_list, int(cu[0]))
+                        ta_normal_list.append(call_with_name[ind](close_list, int(cu[0]))[-1])
                     elif ind == 'macd':
-                        period_dict[cu[-1]][column_name], period_dict[cu[-1]][name_tool(['macdsig']+cu)],period_dict[cu[-1]][name_tool(['macdhist']+cu)] =\
-                            call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]))
+                        column_name_ex0 = name_tool(['macdsig']+cu)
+                        column_name_ex1 = name_tool(['macdhist']+cu)
+                        a, b, c = call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]))
+                        ta_normal_list.append(a[-1])
+                        ta_normal_list1.append(b[-1])
+                        ta_normal_list2.append(c[-1])
                     elif ind == 'bbands':
-                        period_dict[cu[-1]][name_tool(['bbandsupper']+cu)], period_dict[cu[-1]][name_tool(['bbandsmiddle']+cu)],period_dict[cu[-1]][name_tool(['bbandslower']+cu)] =\
-                            call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
-                else:
-                    close_list = np.asarray(period_dict[cu[-1]]["close"].tolist()) 
-                    column_name = name_tool([ind] + cu )
-                    if ind is not 'macd' or 'bbands':                        
-                        period_dict[cu[-1]][column_name] = call_with_name[ind](close_list, int(cu[0]))
-                    elif ind == 'macd':
-                        period_dict[cu[-1]][column_name], period_dict[cu[-1]][name_tool(['macdsig']+cu)],period_dict[cu[-1]][name_tool(['macdhist']+cu)] =\
-                            call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]))
-                    elif ind == 'bbands':
-                        period_dict[cu[-1]][name_tool(['bbandsupper']+cu)], period_dict[cu[-1]][name_tool(['bbandsmiddle']+cu)],period_dict[cu[-1]][name_tool(['bbandslower']+cu)] =\
-                            call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
+                        column_name = name_tool(['bbandsupper']+cu)
+                        column_name_ex0 = name_tool(['bbandsmiddle']+cu)
+                        column_name_ex1 = name_tool(['bbandslower']+cu)
+                        a,b,c = call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
+                        ta_normal_list.append(a[-1])
+                        ta_normal_list1.append(b[-1])
+                        ta_normal_list2.append(c[-1])
+
+                ta_indicators[column_name] = ta_normal_list
+                if ta_normal_list1:
+                    ta_indicators[column_name_ex0] = ta_normal_list1
+                if ta_normal_list2:
+                    ta_indicators[column_name_ex1] = ta_normal_list2
+                
+                # else:
+                #     close_list = np.asarray(period_dict[cu[-1]]["close"].tolist()) 
+                #     column_name = name_tool([ind] + cu )
+                #     if ind is not 'macd' or 'bbands':                        
+                #         period_dict[cu[-1]][column_name] = call_with_name[ind](close_list, int(cu[0]))
+                #     elif ind == 'macd':
+                #         period_dict[cu[-1]][column_name], period_dict[cu[-1]][name_tool(['macdsig']+cu)],period_dict[cu[-1]][name_tool(['macdhist']+cu)] =\
+                #             call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]))
+                #     elif ind == 'bbands':
+                #         period_dict[cu[-1]][name_tool(['bbandsupper']+cu)], period_dict[cu[-1]][name_tool(['bbandsmiddle']+cu)],period_dict[cu[-1]][name_tool(['bbandslower']+cu)] =\
+                #             call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
+        
         #pick up data
         if period.endswith('m'):
             start_date = start_date+'-01'
         rangedf = df[df.date>= start_date]  
-        rangelen = len(rangedf)  # the total output, list length of outT
-        for per in period_dict:
-            rangedf = rangedf.merge(period_dict[per], how = 'left', on='date', copy = False, suffixes=('', '_y'))
-            drop_y(rangedf)
+        rangelen = len(rangedf)  # the total output, list length of outT        
+        rangedf = rangedf.merge(ta_indicators, how = 'left', on='date', copy = False, suffixes=('', '_y'))
+        drop_y(rangedf)
         for i in range(rangelen): #the nth output
             c_dt = rangedf.iloc[i].to_dict() 
             if len(outT) ==0:
@@ -674,7 +702,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('test','1d','2008-08-08', ['rsi_10_1d','rsi_10_3d'])[0]
+    re = get_all('test','1w','2015-08-08', ['rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
     print(re)
     # print(re[1])
     # print(re[2])    
