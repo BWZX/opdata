@@ -577,7 +577,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         if not jp_finance.empty:
             df = df.merge(jp_finance, how='left', on ='date', suffixes=('', '_y'))
             drop_y(df)
-            print(df[df.date>'2008-01-08'])
+            # print(df[df.date>'2008-01-08'])
         
         t_columns=list(df.columns)
         for it in all_columns:
