@@ -701,7 +701,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('test','1w','2015-08-08', ['rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
+    re = get_all('hs300','1m','2015-08-08', ['rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
     print(re)
     # print(re[1])
     # print(re[2])    
