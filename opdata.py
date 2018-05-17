@@ -594,10 +594,10 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         df = df[df.index%PERIOD==0]
         df = df.reset_index()
         del df['index']
-        del df['open']
-        del df['high']
-        del df['low']
-        del df['volume']
+        # del df['open']
+        # del df['high']
+        # del df['low']
+        # del df['volume']
         call_with_name ={
             'rsi': talib.RSI,
             'sma': talib.SMA,
@@ -701,7 +701,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('hs300','1m','2015-08-08', ['rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
+    re = get_all('test','1m','2010-01', ['open', 'rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
     print(re)
     # print(re[1])
     # print(re[2])    
