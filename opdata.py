@@ -10,10 +10,10 @@ import os
 from tqdm import tqdm
 import talib
 
-from opdata import factors as _factors
-from opdata.mongoconnect import *  
-# import factors as _factors  
-# from mongoconnect import *
+# from opdata import factors as _factors
+# from opdata.mongoconnect import *  
+import factors as _factors  
+from mongoconnect import *
 
 __T = ts.trade_cal()
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
@@ -509,14 +509,23 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         args {dict}  -- dict of keyword, support rsi1, rsi2 etc
     Returns:
         list of dataframe,  end date, count
-    """  
+    """ 
+    filenames = ['test', 'allstocks', 'hs300']
+    if pool not in filenames:
+        class_df = ts.get_industry_classified()
+        clsname = list(set(class_df['c_name']))
+        if pool in clsname:
+            dfM = class_df[class_df.c_name == pool]
+        else:
+            return
+        pass
+    else:
+        dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),pool+'.csv'))
     indicator_paras = __parse_factors(factors, period)
     temdate = start_date.split('-')
     date = temdate[0]+temdate[1]
-    dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),pool+'.csv'))
     if not index:
         dfM = dfM[1:]
-
     thedate=''
     nextdate=''
     end_date=''
@@ -595,6 +604,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         PERIOD = int(period[:-1])
         df = df[df.index%PERIOD==0]
         df = df.reset_index()
+        df['pe'] = df['eps'].div(df['close'], axis = 0)
         del df['index']
         # del df['open']
         # del df['high']
@@ -654,7 +664,6 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     ta_indicators[column_name_ex0] = ta_normal_list1
                 if ta_normal_list2:
                     ta_indicators[column_name_ex1] = ta_normal_list2
-                
                 # else:
                 #     close_list = np.asarray(period_dict[cu[-1]]["close"].tolist()) 
                 #     column_name = name_tool([ind] + cu )
