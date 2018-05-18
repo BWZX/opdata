@@ -46,13 +46,15 @@ def JP_VALUATION_FINANCE(code, start_date='2009-01-01', end_date='2017-12-31'):
     del T['isOpen']
     # print(T)
     price = opdata.get_day(code, start_date, end_date)
+    if price.empty:
+        return price
     # print(price)
     # print(T)
     T=T.reset_index()
     price=price.reset_index()
     # print(price)
     out = pd.DataFrame()
-    out['code'] = price['code']
+    out['code'] = code
     out['date'] = price['date']
     # print(out)
     # print(T)

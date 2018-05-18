@@ -11,8 +11,8 @@ from tqdm import tqdm
 import talib
 
 from opdata import factors as _factors
-# import factors as _factors
-from opdata.mongoconnect import *    
+from opdata.mongoconnect import *  
+# import factors as _factors  
 # from mongoconnect import *
 
 __T = ts.trade_cal()
@@ -550,7 +550,9 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         'rateofreturn', 'seg', 'cf_liabilities', 'cf_nm', 'arturndays', 'epcf', 'code', \
         'mbrg', 'nprg', 'business_income', 'EBT2TA', 'cf_sales', 'eps', 'arturnover', \
         'net_profit_ratio', 'EBITDA2TA', 'quickratio', 'bips', 'low']
-
+    code_list = list(dfM[thedate])
+    # print(code_list)
+    # exit()
     for code in tqdm(dfM[thedate]):         
         code = str(code)
         # print(code)
@@ -701,7 +703,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('test','1m','2010-01', ['open', 'rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
+    re = get_all('allstocks','1m','2010-01', ['open', 'rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
     print(re)
     # print(re[1])
     # print(re[2])    
