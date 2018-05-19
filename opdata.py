@@ -656,14 +656,23 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     elif ind == 'macd':
                         column_name_ex0 = name_tool(['macdsig']+cu)
                         column_name_ex1 = name_tool(['macdhist']+cu)
+                        factors.append(column_name_ex0)
+                        factors.append(column_name_ex1)
                         a, b, c = call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]))
-                        ta_normal_list.append(a[-1])
+                        ta_normal_list.column_name_ex1)
                         ta_normal_list1.append(b[-1])
                         ta_normal_list2.append(c[-1])
                     elif ind == 'bbands':
                         column_name = name_tool(['bbandsupper']+cu)
+                        bbands_index = factors.index(name_tool(['bbands']+cu))
+                        if bbands_index == len(factors) -1:
+                            factors = factors[:-1]
+                        else:
+                            factors = factors[0:bbands_index] + factors[bbands_index+1:]
                         column_name_ex0 = name_tool(['bbandsmiddle']+cu)
                         column_name_ex1 = name_tool(['bbandslower']+cu)
+                        factors.append(column_name_ex0)
+                        factors.append(column_name_ex1)
                         a,b,c = call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
                         ta_normal_list.append(a[-1])
                         ta_normal_list1.append(b[-1])
