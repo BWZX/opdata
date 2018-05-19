@@ -10,10 +10,10 @@ import os
 from tqdm import tqdm
 import talib
 
-# from opdata import factors as _factors
-# from opdata.mongoconnect import *  
-import factors as _factors  
-from mongoconnect import *
+from opdata import factors as _factors
+from opdata.mongoconnect import *  
+# import factors as _factors  
+# from mongoconnect import *
 
 __T = ts.trade_cal()
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
