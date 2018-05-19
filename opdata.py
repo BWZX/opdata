@@ -659,7 +659,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                         factors.append(column_name_ex0)
                         factors.append(column_name_ex1)
                         a, b, c = call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]))
-                        ta_normal_list.column_name_ex1)
+                        ta_normal_list.append(a[-1])
                         ta_normal_list1.append(b[-1])
                         ta_normal_list2.append(c[-1])
                     elif ind == 'bbands':
