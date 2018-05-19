@@ -11,12 +11,12 @@ Arguments:<br>
 *    factors {list} -- a list contain factors you want to get, default to get all.
 *    count {int} --a number presents the length of return list, default 10. 
 *    index {bool} -- default to be True, whether contain index in pool or not.
-*    args {dict}  -- dict of keyword, support rsi1, rsi2 etc
+*    args {dict}  -- dict of keyword, support rsi1, rsi2 etc ————no more support.
 
 Returns:<br>
 *    list of dataframe,  end date, count
 
-## 所以可用的pool
+## 所有可用的pool
 1. 'test' , 'allstocks', 'hs300'
 2. '电子器件', '玻璃行业', '商业百货', '传媒娱乐', '造纸行业', '生物制药', '陶瓷行业', '印刷包装', '建筑建材', '石油行业', '纺织机械', '环保行业', '飞机制造', '其它行业', '船舶制造', '物资外贸', '摩托车', '机械行业', '医疗器械', '家具行业', '公路桥梁', '钢铁行业', '水泥行业', '交通运输', '食品行业', '发电设备', '化工行业', '塑料制品', '仪器仪表', '有色金属', '金融行业', '供水供气', '煤炭行业', '农林牧渔', '酿酒行业', '房地产', '电器行业', '综合行业', '次新股', '汽车制造', '农药化肥', '酒店旅游', '家电行业', '电子信息', '化纤行业', '开发区', '电力行业', '纺织行业', '服装鞋类'
 
@@ -72,4 +72,16 @@ general_equity | --
 flow_equity | --
 EBITDA2 | 经营性现金流入
 pe | --
+rsi |  talib.RSI,
+sma |  talib.SMA,
+ema |  talib.EMA,
+mom |  talib.MOM,
+rocr | talib.ROCR,
+macd | talib.MACD,
+tsf |  talib.TSF,
+trix | talib.TRIX,
+bbands | talib.BBANDS
 
+## 技术指标说明
+{因子代码} _ {指标参数} _ {该指标计算针对的数据周期} <br>
+例如： `rsi_10_3d` 表示在以3天为周期的蜡烛图数据上计算rsi指标，其中rsi这个函数本身的参数是10，其余类似。<br>
