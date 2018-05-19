@@ -68,8 +68,8 @@ def JP_VALUATION_FINANCE(code, start_date='2009-01-01', end_date='2017-12-31'):
     T = T[T.date <= end_date]
     T['code']=str(code)
     del T['isOpen']
-    print(T)
-    exit()
+    # print(T)
+    # exit()
     price = opdata.get_day(code, start_date, end_date)
     if price.empty:
         return price

@@ -516,11 +516,20 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         clsname = list(set(class_df['c_name']))
         if pool in clsname:
             dfM = class_df[class_df.c_name == pool]
+            dfM['200607'] = dfM['code']
+            dfM['201801'] = dfM['code']
+            dfM = dfM.reset_index()
+            del dfM['index']
+            del dfM['code']
+            del dfM['name']
+            del dfM['c_name']
+            # print(dfM)
         else:
             return
         pass
     else:
         dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),pool+'.csv'))
+    # print(dfM)
     indicator_paras = __parse_factors(factors, period)
     temdate = start_date.split('-')
     date = temdate[0]+temdate[1]
@@ -558,7 +567,8 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         'sheqratio','bvps','high', 'cashflowratio', 'inventory_turnover', \
         'rateofreturn', 'seg', 'cf_liabilities', 'cf_nm', 'arturndays', 'epcf', 'code', \
         'mbrg', 'nprg', 'business_income', 'EBT2TA', 'cf_sales', 'eps', 'arturnover', \
-        'net_profit_ratio', 'EBITDA2TA', 'quickratio', 'bips', 'low']
+        'net_profit_ratio', 'EBITDA2TA', 'quickratio', 'bips', 'low', 'EBITDA', 'EBIT', \
+        'general_equity', 'flow_equity', 'EBITDA2', 'pe']
     code_list = list(dfM[thedate])
     # print(code_list)
     # exit()
@@ -712,7 +722,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('allstocks','1m','2010-01', ['open', 'rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
+    re = get_all('test','1m','2010-01', ['open', 'rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
     print(re)
     # print(re[1])
     # print(re[2])    
