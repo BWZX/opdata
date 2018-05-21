@@ -9,7 +9,7 @@ Arguments:<br>
 *    start_date {string} -- a string presents start time, for example: daily: '2012-01-01',
         weekly: '2012-12-01', monthly: '2012-12'
 *    factors {list} -- a list contain factors you want to get, default to get all.
-*    count {int} --a number presents the length of return list, default 10. 
+*    count {int} --a number presents the length of return list, default 10. --no more support.
 *    index {bool} -- default to be True, whether contain index in pool or not.
 *    args {dict}  -- dict of keyword, support rsi1, rsi2 etc ————no more support.
 
