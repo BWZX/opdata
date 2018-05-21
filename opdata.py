@@ -63,8 +63,8 @@ def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
     del T['isOpen']
     T = T.reset_index()
     del T['index']
-    # del T['code'] 
-    # T['code'] = code
+    del T['code'] 
+    T['code'] = code
     return T        
 
 def macrodata(start=None, end=None):
@@ -703,6 +703,8 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         rangedf = rangedf.merge(ta_indicators, how = 'left', on='date', copy = False, suffixes=('', '_y'))
         drop_y(rangedf)
         for i in range(rangelen): #the nth output
+            if rangedf.iloc[i]['close'] <= 0.0004:
+                continue
             c_dt = rangedf.iloc[i].to_dict() 
             if len(outT) ==0:
                 for jj in range(rangelen):
