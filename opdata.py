@@ -226,7 +226,7 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     if df.empty:
         return df
     del df['_id']
-    del df['code']
+    # del df['code']
     T = __T    
     T.rename(columns={'calendarDate':'date'}, inplace=True)
     # T = T[T.date > '2003-01-01']
@@ -244,7 +244,7 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
     T = T[T.isOpen >0.5]
     T = T[T.date >= start_date]
     T = T[T.date <= end_date]
-    T['code']=str(code)
+    # T['code']=str(code)
     T = T.reset_index()
     del T['index']
     del T['isOpen']
