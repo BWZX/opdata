@@ -81,6 +81,12 @@ macd | talib.MACD,
 tsf |  talib.TSF,
 trix | talib.TRIX,
 bbands | talib.BBANDS
+atr  | --
+mfi  | --
+adx  | --
+cci  | --
+willr | --
+obv  | --
 
 ## 技术指标说明
 {因子代码} _ {指标参数} _ {该指标计算针对的数据周期} <br>
