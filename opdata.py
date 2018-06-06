@@ -659,9 +659,12 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     close_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['close']
                     close_dt.append(df_price[df_price.date == currentdate]['close'])
                     close_list = np.asarray(close_dt.tolist()) 
-                    volume_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<=currentdate]['volume']
-                    low_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<=currentdate]['low']
-                    high_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<=currentdate]['high']
+                    volume_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['volume']
+                    volume_dt.append(df_price[df_price.date == currentdate]['volume'])
+                    low_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['low']
+                    low_dt.append(df_price[df_price.date == currentdate]['low'])
+                    high_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['high']
+                    high_dt.append(df_price[df_price.date == currentdate]['high'])
                     volume_list = np.asarray(volume_dt.tolist()) 
                     low_list = np.asarray(low_dt.tolist()) 
                     high_list = np.asarray(high_dt.tolist()) 
