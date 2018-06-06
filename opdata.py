@@ -627,9 +627,16 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             'mom': talib.MOM,
             'rocr': talib.ROCR,
             'macd': talib.MACD,
-            'tsf': talib.TSF,
+            'tsf':  talib.TSF,
             'trix': talib.TRIX,
-            'bbands':talib.BBANDS
+            'bbands': talib.BBANDS,
+            #########################
+            'atr': talib.ATR,
+            'mfi': talib.MFI,
+            'adx': talib.ADX,
+            'cci': talib.CCI,
+            'willr': talib.WILLR,
+            'obv': talib.OBV
         }
         period_dict = {}
         rangedf = df[df.date>= start_date]  
@@ -651,8 +658,21 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     close_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['close']
                     close_dt.append(df_price[df_price.date == currentdate]['close'])
                     close_list = np.asarray(close_dt.tolist()) 
-                    if ind is not 'macd' or 'bbands':                        
+                    volume_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<=currentdate]['volume']
+                    low_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<=currentdate]['low']
+                    high_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<=currentdate]['high']
+                    volume_list = np.asarray(volume_dt.tolist()) 
+                    low_list = np.asarray(low_dt.tolist()) 
+                    high_list = np.asarray(high_dt.tolist()) 
+
+                    if ind in ['rsi','sma','ema','mom','rocr','tsf','trix']:                        
                         ta_normal_list.append(call_with_name[ind](close_list, int(cu[0]))[-1])
+                    elif ind in ['atr', 'adx', 'cci', 'willr']:
+                        ta_normal_list.append(call_with_name[ind](high_list, low_list, close_list, int(cu[0]))[-1])
+                    elif ind =='mfi':
+                        ta_normal_list.append(call_with_name[ind](high_list, low_list, close_list, volume_list, int(cu[0]))[-1])
+                    elif ind =='obv':
+                        ta_normal_list.append(call_with_name[ind](close_list, volume_list))
                     elif ind == 'macd':
                         column_name_ex0 = name_tool(['macdsig']+cu)
                         column_name_ex1 = name_tool(['macdhist']+cu)
