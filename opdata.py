@@ -480,7 +480,8 @@ def __parse_factors(factors, period):
     """factors format: rsi_{arg}_{period}  or macd_{arg1}_{arg2}_{arg3}_{period}   
     """
     compare={'d':0, 'w':1, 'm':2}
-    indicator = ['rsi', 'sma', 'ema', 'mom', 'rocr', 'macd', 'tsf', 'trix', 'bbandupper']
+    indicator = ['rsi', 'sma', 'ema', 'mom', 'rocr', 'macd', 'tsf', 'trix', 'bbandupper', 'atr', \
+        'mfi' ,'adx' ,'cci', 'willr', 'obv']
     outT = {}
     for f in factors:
         k = f.split('_')        
