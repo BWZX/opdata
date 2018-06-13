@@ -639,15 +639,15 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             'willr': talib.WILLR,
             'obv': talib.OBV
         }
-        period_dict = {}
+        # period_dict = {}
         rangedf = df[df.date>= start_date]  
         ta_indicators = pd.DataFrame()
         ta_indicators['date'] = rangedf['date']
         for ind in indicator_paras:   #exp: {'rsi': [['10d', '1d'], ['10d', '3d']]}
             for cu in indicator_paras[ind]:                
-                if type(period_dict.get(cu[-1])) == type(period_dict.get('nothing')):                    
-                    period_dict[cu[-1]] = __make_period__(cu[-1], start_date, end_date)
-                    period_dict[cu[-1]] = period_dict[cu[-1]].merge(df_price,how='left', on = 'date', suffixes=('', '_y'))
+                # if type(period_dict.get(cu[-1])) == type(period_dict.get('nothing')):                    
+                #     period_dict[cu[-1]] = __make_period__(cu[-1], start_date, end_date)
+                #     period_dict[cu[-1]] = period_dict[cu[-1]].merge(df_price,how='left', on = 'date', suffixes=('', '_y'))
                 
                 column_name = name_tool([ind] + cu )
                 column_name_ex0 = ''
@@ -656,21 +656,26 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                 ta_normal_list1 = []
                 ta_normal_list2 = []
                 for currentdate in ta_indicators['date']:
-                    close_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['close']
-                    close_dt.append(df_price[df_price.date == currentdate]['close'])
-                    close_list = np.asarray(close_dt.tolist()) 
-                    volume_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['volume']
-                    volume_dt.append(df_price[df_price.date == currentdate]['volume'])
-                    low_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['low']
-                    low_dt.append(df_price[df_price.date == currentdate]['low'])
-                    high_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['high']
-                    high_dt.append(df_price[df_price.date == currentdate]['high'])
+                    # close_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['close']
+                    close_dt = df_price[df_price.date <= currentdate]['close']
+                    # volume_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['volume']
+                    volume_dt = df_price[df_price.date <= currentdate]['volume']
+                    # low_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['low']
+                    low_dt = df_price[df_price.date <= currentdate]['low']
+                    # high_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['high']
+                    high_dt = df_price[df_price.date <= currentdate]['high']
+                    close_list = np.asarray(close_dt.tolist())
                     volume_list = np.asarray(volume_dt.tolist()) 
                     low_list = np.asarray(low_dt.tolist()) 
                     high_list = np.asarray(high_dt.tolist()) 
 
                     if ind in ['rsi','sma','ema','mom','rocr','tsf','trix']:                        
                         ta_normal_list.append(call_with_name[ind](close_list, int(cu[0]))[-1])
+                        # if ind =='ema' and currentdate == '2017-07-31':
+                        #     print(close_list)
+                        #     print(ta_normal_list)
+                        #     exit()
+                            
                     elif ind in ['atr', 'adx', 'cci', 'willr']:
                         ta_normal_list.append(call_with_name[ind](high_list, low_list, close_list, int(cu[0]))[-1])
                     elif ind =='mfi':
@@ -757,7 +762,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('test','1m','2010-01', ['open', 'rsi_10_1d','rsi_10_3d', 'EBITDA2TA'])[0]
+    re = get_all('test','1m','2010-01', ['open', 'ema_10_1m','rsi_10_1m', 'EBITDA2TA'])[0]
     print(re)
     # print(re[1])
     # print(re[2])    
