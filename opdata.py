@@ -657,13 +657,13 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                 ta_normal_list2 = []
                 for currentdate in ta_indicators['date']:
                     # close_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['close']
-                    close_dt = df_price[df_price.date <= currentdate]['close']
+                    close_dt = df[df.date <= currentdate]['close']
                     # volume_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['volume']
-                    volume_dt = df_price[df_price.date <= currentdate]['volume']
+                    volume_dt = df[df.date <= currentdate]['volume']
                     # low_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['low']
-                    low_dt = df_price[df_price.date <= currentdate]['low']
+                    low_dt = df[df.date <= currentdate]['low']
                     # high_dt = period_dict[cu[-1]][period_dict[cu[-1]].date<currentdate]['high']
-                    high_dt = df_price[df_price.date <= currentdate]['high']
+                    high_dt = df[df.date <= currentdate]['high']
                     close_list = np.asarray(close_dt.tolist())
                     volume_list = np.asarray(volume_dt.tolist()) 
                     low_list = np.asarray(low_dt.tolist()) 
@@ -672,6 +672,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     if ind in ['rsi','sma','ema','mom','rocr','tsf','trix']:                        
                         ta_normal_list.append(call_with_name[ind](close_list, int(cu[0]))[-1])
                         # if ind =='ema' and currentdate == '2017-07-31':
+                        #     print(close_dt)
                         #     print(close_list)
                         #     print(ta_normal_list)
                         #     exit()
