@@ -671,12 +671,12 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
 
                     if ind in ['rsi','sma','ema','mom','rocr','tsf','trix']:                        
                         ta_normal_list.append(call_with_name[ind](close_list, int(cu[0]))[-1])
-                        if ind =='ema' and currentdate == '2017-07-31':
-                            print(period_dict[cu[-1]])
-                            print(close_dt)
-                            print(close_list)
-                            print(ta_normal_list)
-                            exit()
+                        # if ind =='ema' and currentdate == '2017-07-31':
+                        #     print(period_dict[cu[-1]])
+                        #     print(close_dt)
+                        #     print(close_list)
+                        #     print(ta_normal_list)
+                        #     exit()
                             
                     elif ind in ['atr', 'adx', 'cci', 'willr']:
                         ta_normal_list.append(call_with_name[ind](high_list, low_list, close_list, int(cu[0]))[-1])
