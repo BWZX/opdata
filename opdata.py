@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import json
 import pandas as pd
 import tushare as ts
@@ -486,9 +486,9 @@ def __parse_factors(factors, period):
     for f in factors:
         k = f.split('_')        
         if k[0] in indicator: 
-            if compare[k[-1][-1]] > compare[period[-1]]:
-                print('it will be confusion when the tech indicator has less data length than finance indicator.\n ignore this item.')
-                continue           
+            # if compare[k[-1][-1]] > compare[period[-1]]:
+            #     print('it will be confusion when the tech indicator has less data length than finance indicator.\n ignore this item.')
+            #     continue           
             if outT.get(k[0]):
                 outT[k[0]].append(k[1:])
             else:
@@ -612,11 +612,11 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         df = df.merge(T,how='right', on = 'date', suffixes=('', '_y'))
         df = df.reset_index()
         del df['index']
-        PERIOD = int(period[:-1])
-        df = df[df.index%PERIOD==0]
-        df = df.reset_index()
-        df['pe'] = df['eps'].div(df['close'], axis = 0)
-        del df['index']
+        # PERIOD = int(period[:-1])
+        # df = df[df.index%PERIOD==0]
+        # df = df.reset_index()
+        df['pe'] = df['close'].div(df['eps'], axis = 0)
+        # del df['index']
         # del df['open']
         # del df['high']
         # del df['low']
@@ -764,7 +764,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('test','1m','2010-01', ['open', 'ema_10_1m','rsi_10_1m', 'EBITDA2TA'])[0]
+    re = get_all('test','2w','2010-01', ['open', 'ema_10_1m','rsi_10_1m', 'EBITDA2TA'])
     print(re)
     # print(re[1])
     # print(re[2])    
