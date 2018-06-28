@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import json
 import pandas as pd
 import tushare as ts
@@ -481,7 +481,7 @@ def __parse_factors(factors, period):
     """
     compare={'d':0, 'w':1, 'm':2}
     indicator = ['rsi', 'sma', 'ema', 'mom', 'rocr', 'macd', 'tsf', 'trix', 'bbandupper', 'atr', \
-        'mfi' ,'adx' ,'cci', 'willr', 'obv']
+        'mfi' ,'adx' ,'cci', 'willr', 'obv','vol']
     outT = {}
     for f in factors:
         k = f.split('_')        
@@ -643,12 +643,27 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         rangedf = df[df.date>= start_date]  
         ta_indicators = pd.DataFrame()
         ta_indicators['date'] = rangedf['date']
-        for ind in indicator_paras:   #exp: {'rsi': [['10d', '1d'], ['10d', '3d']]}
+        for ind in indicator_paras:   #exp: {'rsi': [['10', '1d'], ['10', '3d']]}
             for cu in indicator_paras[ind]:                
                 if type(period_dict.get(cu[-1])) == type(period_dict.get('nothing')):                    
                     period_dict[cu[-1]] = __make_period__(cu[-1], start_date, end_date)
                     period_dict[cu[-1]] = period_dict[cu[-1]].merge(df_price,how='left', on = 'date', suffixes=('', '_y'))
-                
+                    ## here deal with the volume
+                    temmm=0
+                    tem_prd=period_dict[cu[-1]].head(1).index
+                    for col in range(len(df_price)):  
+                        temmm = temmm + df_price.iloc[col].volume                        
+                        # print(df_price.iloc[col].date)
+                        if str(period_dict[cu[-1]].loc[tem_prd].date.values[0]) > df_price.iloc[col].date:
+                            continue                            
+                        else:
+                            period_dict[cu[-1]].loc[tem_prd,'volume'] = temmm
+                            tem_prd = tem_prd +1
+                            if tem_prd > period_dict[cu[-1]].tail(1).index:
+                                break
+                            temmm=0
+                    # import pdb;pdb.set_trace()
+                    
                 column_name = name_tool([ind] + cu )
                 column_name_ex0 = ''
                 column_name_ex1 = ''
@@ -708,6 +723,25 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                         ta_normal_list.append(a[-1])
                         ta_normal_list1.append(b[-1])
                         ta_normal_list2.append(c[-1])
+                    elif ind == 'vol':
+                        if cu[-1] == '1d' and int(cu[0]) < 0:
+                            ta_normal_list.append(volume_list[int(cu[0])])
+                        else:
+                            if cu[-1].endswith('d'):
+                                temmm=0
+                                for i in range(int(cu[-1][0:-1])):
+                                    temmm=temmm+volume_list[-i]
+                                ta_normal_list.append(temmm)
+                            if cu[-1].endswith('w'):
+                                temmm=0
+                                for i in range(int(cu[-1][0:-1])):
+                                    temmm=temmm+volume_list[-i]
+                                ta_normal_list.append(temmm)
+                            if cu[-1].endswith('m'): 
+                                temmm=0
+                                for i in range(int(cu[-1][0:-1])):
+                                    temmm=temmm+volume_list[-i]
+                                ta_normal_list.append(temmm)
 
                 ta_indicators[column_name] = ta_normal_list
                 if ta_normal_list1:
@@ -764,7 +798,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('test','2w','2010-01', ['open', 'ema_10_1m','rsi_10_1m', 'EBITDA2TA'])
+    re = get_all('test','1m','2010-01', ['open', 'vol_-1_1d','rsi_10_1m', 'EBITDA2TA'])
     print(re)
     # print(re[1])
     # print(re[2])    
