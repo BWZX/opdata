@@ -684,6 +684,9 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                     low_list = np.asarray(low_dt.tolist()) 
                     high_list = np.asarray(high_dt.tolist()) 
 
+                    # if currentdate >"2016-11-12":
+                    #     import pdb;pdb.set_trace()
+
                     if ind in ['rsi','sma','ema','mom','rocr','tsf','trix']:                        
                         ta_normal_list.append(call_with_name[ind](close_list, int(cu[0]))[-1])
                         # if ind =='ema' and currentdate == '2017-07-31':
@@ -730,17 +733,17 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
                             if cu[-1].endswith('d'):
                                 temmm=0
                                 for i in range(int(cu[-1][0:-1])):
-                                    temmm=temmm+volume_list[-i]
+                                    temmm=temmm+volume_list[-(1+i)]
                                 ta_normal_list.append(temmm)
                             if cu[-1].endswith('w'):
                                 temmm=0
                                 for i in range(int(cu[-1][0:-1])):
-                                    temmm=temmm+volume_list[-i]
+                                    temmm=temmm+volume_list[-(1+i)]
                                 ta_normal_list.append(temmm)
                             if cu[-1].endswith('m'): 
                                 temmm=0
                                 for i in range(int(cu[-1][0:-1])):
-                                    temmm=temmm+volume_list[-i]
+                                    temmm=temmm+volume_list[-(1+i)]
                                 ta_normal_list.append(temmm)
 
                 ta_indicators[column_name] = ta_normal_list
@@ -798,7 +801,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('test','1m','2010-01', ['open', 'vol_-1_1d','rsi_10_1m', 'EBITDA2TA'])
+    re = get_all('test','1m','2010-01', ['open', 'vol_1_1m','rsi_10_1m', 'EBITDA2TA'],index=False)
     print(re)
     # print(re[1])
     # print(re[2])    
