@@ -15,7 +15,7 @@ from opdata.mongoconnect import *
 # import factors as _factors  
 # from mongoconnect import *
 
-__T = ts.trade_cal()
+__T = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'calAll.csv'))
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
 
 def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
