@@ -10,10 +10,10 @@ import os
 from tqdm import tqdm
 import talib
 
-# from opdata import factors as _factors
-# from opdata.mongoconnect import *  
-import factors as _factors  
-from mongoconnect import *
+from opdata import factors as _factors
+from opdata.mongoconnect import *  
+# import factors as _factors  
+# from mongoconnect import *
 
 __T = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'calAll.csv'))
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
@@ -907,13 +907,13 @@ if __name__ == '__main__':
     # _fetch_finance()
     # print(get_finance('000001'))
     # print(get_local_future('A99'))
-    print(get_forecast('000001'))
+    # print(get_forecast('000001'))
     # print(get_holdfund('000001'))
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    # re = get_all('test','1m','2010-01', ['open', 'vol_1_1m','rsi_10_1m', 'EBITDA2TA'],index=False)
-    # print(re)
+    re = get_all('test','1m','2010-01', ['open', 'vol_1_1m','rsi_10_1m', 'type', 'EBITDA2TA'],index=False)
+    print(re)
     # _fetch_forecast()
     # print(re[1])
     # print(re[2])    
