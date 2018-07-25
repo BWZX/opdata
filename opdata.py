@@ -613,7 +613,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
     """ 
     filenames = ['test', 'allstocks', 'hs300']
     if pool not in filenames:
-        class_df = ts.get_industry_classified()
+        class_df = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'industry.csv'))
         clsname = list(set(class_df['c_name']))
         if pool in clsname:
             dfM = class_df[class_df.c_name == pool]
@@ -624,7 +624,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
             del dfM['code']
             del dfM['name']
             del dfM['c_name']
-            # print(dfM)
+            print(dfM)
         else:
             return
         pass
@@ -912,7 +912,7 @@ if __name__ == '__main__':
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('test','1m','2010-01', ['open', 'vol_1_1m','rsi_10_1m', 'type', 'EBITDA2TA'],index=False)
+    re = get_all('电子器件','1m','2010-01', ['open', 'vol_1_1m','rsi_10_1m', 'type', 'EBITDA2TA'],index=False)
     print(re)
     # _fetch_forecast()
     # print(re[1])
