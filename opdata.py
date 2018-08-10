@@ -10,21 +10,29 @@ import os
 from tqdm import tqdm
 import talib
 
-from opdata import factors as _factors
-from opdata.mongoconnect import *  
-# import factors as _factors  
-# from mongoconnect import *
+# from opdata import factors as _factors
+# from opdata.mongoconnect import *  
+import factors as _factors  
+from mongoconnect import *
 
 __T = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'calAll.csv'))
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
 
-def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
+def get_day(code, start_date='2001-02-01', end_date='2017-10-10', us_market=False):
     # if not start_date:
     #     start_date='2001-01-01'
     # if not end_date:
     #     end_date='2020-10-10'
-    T= __T
-    cursor = security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+    if us_market:
+        T = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'US500.csv'))
+        T = T['Date']
+        T = T.rename(columns={'Date':'calendarDate'}, inplace=True)
+        T['isOpen'] = 1
+        cursor = security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+    else:
+        T= __T
+        cursor = us_security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+    
     df = pd.DataFrame(list(cursor))
     if df.empty:
         return df  
@@ -38,7 +46,7 @@ def get_day(code, start_date='2001-02-01', end_date='2017-10-10'):
             lastvalue = v
             return lastvalue
     T.rename(columns={'calendarDate':'date'}, inplace=True)
-    T=T[T.date > '2001-01-01']
+    T=T[T.date > '2007-01-01']
     T=T.merge(df,on='date',how='left', copy=False)
     T=T.drop_duplicates(['date'])
     T[['open']] = T[['open']].astype(float)
@@ -221,7 +229,7 @@ def _fetch_forecast():
             forecast.insert(fcast.to_dict('record'))          
             # rep['date']=rep['date'].apply(set_year)
 
-def get_finance(code, start_date='2004-04-01', end_date='2017-10-10'):
+def get_finance(code, start_date='2004-04-01', end_date='2017-10-10', us_market=False):
     lastvalue = 0.0
     def setValue(v):
         nonlocal lastvalue
@@ -596,7 +604,7 @@ def __parse_factors(factors, period):
                 
     return outT
 
-def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
+def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market = False,**args):
     """get all factors within a stocks pool
     
     Arguments:
@@ -611,7 +619,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
     Returns:
         list of dataframe,  end date, count
     """ 
-    filenames = ['test', 'allstocks', 'hs300']
+    filenames = ['test', 'allstocks', 'hs300','usall']
     if pool not in filenames:
         class_df = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'industry.csv'))
         clsname = list(set(class_df['c_name']))
@@ -632,24 +640,30 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         dfM = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),pool+'.csv'))
     # print(dfM)
     indicator_paras = __parse_factors(factors, period)
-    temdate = start_date.split('-')
-    date = temdate[0]+temdate[1]
-    if not index:
-        dfM = dfM[1:]
-    thedate=''
-    nextdate=''
-    end_date=''
-    for d in dfM:
-        thedate = str(d)
-        if int(date) < int(d):
-            break
-    if thedate.endswith('01'):
-        nextdate=thedate[:-1] + '6'
-        end_date = nextdate[:4]+'-'+nextdate[4:]+'-'+'30'
+    if not us_market:
+        temdate = start_date.split('-')
+        date = temdate[0]+temdate[1]
+        if not index:
+            dfM = dfM[1:]
+        thedate=''
+        nextdate=''
+        end_date=''
+        for d in dfM:
+            thedate = str(d)
+            if int(date) < int(d):
+                break
+        if thedate.endswith('01'):
+            nextdate=thedate[:-1] + '6'
+            end_date = nextdate[:4]+'-'+nextdate[4:]+'-'+'30'
+        else:
+            nextdate=thedate[:-2] + '12'
+            end_date = nextdate[:4]+'-'+nextdate[4:]+'-'+'31'
+
+        code_list = list(dfM[thedate])
     else:
-        nextdate=thedate[:-2] + '12'
-        end_date = nextdate[:4]+'-'+nextdate[4:]+'-'+'31'
-    
+        code_list = list[dfM['code']]
+        code_list = code_list[:300]
+        
     outT=[]
     def drop_y(df):
         # list comprehension of the cols that end with '_y'
@@ -671,21 +685,21 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, **args):
         'net_profit_ratio', 'EBITDA2TA', 'quickratio', 'bips', 'low', 'EBITDA', 'EBIT', \
         'general_equity', 'flow_equity', 'EBITDA2', 'pe','fund_holders','t_shares',\
         't_share_rate','t_market_value','t_net_rate', 'pre_eps', 'range', 'type']
-    code_list = list(dfM[thedate])
+    
     # print(code_list)
     # exit()
-    for code in tqdm(dfM[thedate]):         
+    for code in tqdm(code_list):         
         code = str(code)
         # print(code)
         if len(code) <6:
             code = '000000'+code
             code = code[-6:]
         # print(code)        
-        df_price = get_day(code, '1995-01-01', end_date)
+        df_price = get_day(code, '1995-01-01', end_date, us_market=us_market)
         if code == 'sh000300':
             df_price['name'] = 'sh300'
         df_finance = get_finance(code, '1995-01-01', end_date)
-        jp_finance = _factors.JP_VALUATION_FINANCE(code,'1995-01-01',end_date)
+        jp_finance = _factors.JP_VALUATION_FINANCE(code,'1995-01-01',end_date, us_market=us_market)
         df_holdfund = get_holdfund(code,'2004-01-01',end_date)
         df_forecast = get_forecast(code,'2004-01-01',end_date)
         # print(jp_finance)
