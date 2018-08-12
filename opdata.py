@@ -605,8 +605,7 @@ def __parse_factors(factors, period):
     return outT
 
 def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market = False,**args):
-    """get all factors within a stocks pool
-    
+    """get all factors within a stocks pool    
     Arguments:
         pool {string} -- pool name, such as 'hs300'        
         period {string} -- a string indicates data period, could be one of them: nd, nw, nm
