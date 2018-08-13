@@ -238,7 +238,15 @@ def get_finance(code, start_date='2004-04-01', end_date='2017-10-10', us_market=
         else:
             lastvalue = v
             return lastvalue
-    cursor = finance.find({'code':str(code), 'date':{'$gte':'2004-01-01', '$lte': end_date}}).sort('date')
+    if not us_market:
+        cursor = finance.find({'code':str(code), 'date':{'$gte':'2004-01-01', '$lte': end_date}}).sort('date')
+    else:
+        T = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'US500.csv'))
+        T = T['Date']
+        T = T.rename(columns={'Date':'calendarDate'}, inplace=True)
+        T['isOpen'] = 1
+        cursor = us_finance.find({'code':str(code), 'date':{'$gte':'2004-01-01', '$lte': end_date}}).sort('date')
+
     df = pd.DataFrame(list(cursor))
     if df.empty:
         return df
@@ -604,7 +612,7 @@ def __parse_factors(factors, period):
                 
     return outT
 
-def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market = False,**args):
+def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market = False, **args):
     """get all factors within a stocks pool    
     Arguments:
         pool {string} -- pool name, such as 'hs300'        
@@ -675,15 +683,23 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
             kk=kk+it+'_'
         return kk[:-1]
 
-    all_columns=['cashratio', 'name', 'currentasset_days', 'adratio', \
-        'roe', 'net_profits', 'icratio', 'open', 'close', 'volume', 'currentasset_turnover', \
-        'nav', 'gross_profit_rate', 'BVY', 'epsg', 'date', 'CF2TA', 'SY', 'currentratio', \
-        'sheqratio','bvps','high', 'cashflowratio', 'inventory_turnover', \
-        'rateofreturn', 'seg', 'cf_liabilities', 'cf_nm', 'arturndays', 'epcf', 'code', \
-        'mbrg', 'nprg', 'business_income', 'EBT2TA', 'cf_sales', 'eps', 'arturnover', \
-        'net_profit_ratio', 'EBITDA2TA', 'quickratio', 'bips', 'low', 'EBITDA', 'EBIT', \
-        'general_equity', 'flow_equity', 'EBITDA2', 'pe','fund_holders','t_shares',\
-        't_share_rate','t_market_value','t_net_rate', 'pre_eps', 'range', 'type']
+    if not us_market:
+        all_columns=['cashratio', 'name', 'currentasset_days', 'adratio', \
+            'roe', 'net_profits', 'icratio', 'open', 'close', 'volume', 'currentasset_turnover', \
+            'nav', 'gross_profit_rate', 'BVY', 'epsg', 'date', 'CF2TA', 'SY', 'currentratio', \
+            'sheqratio','bvps','high', 'cashflowratio', 'inventory_turnover', \
+            'rateofreturn', 'seg', 'cf_liabilities', 'cf_nm', 'arturndays', 'epcf', 'code', \
+            'mbrg', 'nprg', 'business_income', 'EBT2TA', 'cf_sales', 'eps', 'arturnover', \
+            'net_profit_ratio', 'EBITDA2TA', 'quickratio', 'bips', 'low', 'EBITDA', 'EBIT', \
+            'general_equity', 'flow_equity', 'EBITDA2', 'pe','fund_holders','t_shares',\
+            't_share_rate','t_market_value','t_net_rate', 'pre_eps', 'range', 'type']
+    else:
+        all_columns = ['date','总市值','市盈率','市净率','市现率','市销率','总资产收益率',\
+            '净资产收益率','营业毛利率','税前利润率','营业利润率','净利润率',\
+            '销售收入/平均总资产','总资本回报率','总负债/总资产','普通股权益/总资产',\
+            '派息比率','资本支出/销售额','流动比率','负债/息税前营业利润',\
+            '速动比率','每股净资产','摊薄每股收益','每股销售额','open', 'close', 'volume',\
+            'code', 'high', 'low']
     
     # print(code_list)
     # exit()
@@ -698,9 +714,14 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
         if code == 'sh000300':
             df_price['name'] = 'sh300'
         df_finance = get_finance(code, '1995-01-01', end_date)
-        jp_finance = _factors.JP_VALUATION_FINANCE(code,'1995-01-01',end_date, us_market=us_market)
-        df_holdfund = get_holdfund(code,'2004-01-01',end_date)
-        df_forecast = get_forecast(code,'2004-01-01',end_date)
+        if not us_market:
+            jp_finance = _factors.JP_VALUATION_FINANCE(code,'1995-01-01',end_date, us_market=us_market)
+            df_holdfund = get_holdfund(code,'2004-01-01',end_date)
+            df_forecast = get_forecast(code,'2004-01-01',end_date)
+        else:
+            jp_finance = pd.DataFrame()
+            df_holdfund = pd.DataFrame()
+            df_forecast = pd.DataFrame()
         # print(jp_finance)
         # exit()
         #merge
