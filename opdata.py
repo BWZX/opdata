@@ -25,13 +25,14 @@ def get_day(code, start_date='2001-02-01', end_date='2017-10-10', us_market=Fals
     #     end_date='2020-10-10'
     if us_market:
         T = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'US500.csv'))
-        T = T['Date']
-        T = T.rename(columns={'Date':'calendarDate'}, inplace=True)
+        T.rename(columns={'Date':'calendarDate'}, inplace=True)        
         T['isOpen'] = 1
-        cursor = security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+        T = T[['calendarDate', 'isOpen']]
+        # print(T)
+        cursor = us_security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
     else:
         T= __T
-        cursor = us_security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
+        cursor = security.find({'code':code, 'date':{'$gte':start_date, '$lte': end_date}}).sort('date')
     
     df = pd.DataFrame(list(cursor))
     if df.empty:
@@ -668,8 +669,9 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
 
         code_list = list(dfM[thedate])
     else:
-        code_list = list[dfM['code']]
-        code_list = code_list[:300]
+        end_date = '2018-01-01'
+        code_list = list(dfM['symbol'])
+        code_list = code_list[:3]
         
     outT=[]
     def drop_y(df):
@@ -701,15 +703,15 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
             '速动比率','每股净资产','摊薄每股收益','每股销售额','open', 'close', 'volume',\
             'code', 'high', 'low']
     
-    # print(code_list)
+    print(code_list)
     # exit()
     for code in tqdm(code_list):         
         code = str(code)
         # print(code)
-        if len(code) <6:
+        if not us_market and len(code) <6:
             code = '000000'+code
             code = code[-6:]
-        # print(code)        
+        print(code)        
         df_price = get_day(code, '1995-01-01', end_date, us_market=us_market)
         if code == 'sh000300':
             df_price['name'] = 'sh300'
@@ -728,6 +730,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
         if df_price.empty:
             # print('code {} has no data'.format(code))
             continue
+        # import pdb; pdb.set_trace() 
         if not df_finance.empty:
             df = df_price.merge(df_finance, how='left', on ='date', suffixes=('', '_y'))
             drop_y(df)            
@@ -758,7 +761,8 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
         # PERIOD = int(period[:-1])
         # df = df[df.index%PERIOD==0]
         # df = df.reset_index()
-        df['pe'] = df['close'].div(df['eps'], axis = 0)
+        if not us_market:
+            df['pe'] = df['close'].div(df['eps'], axis = 0)
         # del df['index']
         # del df['open']
         # del df['high']
@@ -783,7 +787,8 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
             'obv': talib.OBV
         }
         period_dict = {}
-        rangedf = df[df.date>= start_date]  
+        
+        rangedf = df[df.date >= start_date]  
         ta_indicators = pd.DataFrame()
         ta_indicators['date'] = rangedf['date']
         for ind in indicator_paras:   #exp: {'rsi': [['10', '1d'], ['10', '3d']]}
@@ -909,7 +914,9 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
         #pick up data
         if period.endswith('m'):
             start_date = start_date+'-01'
-        rangedf = df[df.date>= start_date]  
+        rangedf = df[df.date>= start_date] 
+
+
         rangelen = len(rangedf)  # the total output, list length of outT        
         rangedf = rangedf.merge(ta_indicators, how = 'left', on='date', copy = False, suffixes=('', '_y'))
         drop_y(rangedf)
@@ -937,7 +944,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
 
 if __name__ == '__main__':
     # print(macrodata())
-    # print(get_day('002236','2007-08-05','2010-08-05'))
+    # print(get_day('GOOGL','2007-08-05','2010-08-05',us_market=True))
     # _fetch_finance()
     # print(get_finance('000001'))
     # print(get_local_future('A99'))
@@ -945,9 +952,9 @@ if __name__ == '__main__':
     # print(get_holdfund('000001'))
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
-    # print(get_ts_finance('000001','1m'))
-    re = get_all('电子器件','1m','2010-01', ['open', 'vol_1_1m','rsi_10_1m', 'type', 'EBITDA2TA'],index=False)
-    print(re)
+    print(get_ts_finance('000001','1m'))
+    re = get_all('usall','1m','2010-01', ['open', 'vol_1_1m','rsi_10_1m'],index=False, us_market=True)
+    # print(re)
     # _fetch_forecast()
     # print(re[1])
     # print(re[2])    
