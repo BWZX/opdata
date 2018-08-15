@@ -102,6 +102,8 @@ def JP_VALUATION_FINANCE(code, start_date='2009-01-01', end_date='2017-12-31'):
     # print(out)
     return out
 
+def US_JP_FINANCE(code,start_date='2009-01-01',end_date='2018-01-01'):
+    
 
 if __name__ == '__main__':
     dff=JP_VALUATION_FINANCE('000001')
