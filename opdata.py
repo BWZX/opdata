@@ -10,10 +10,10 @@ import os
 from tqdm import tqdm
 import talib
 
-# from opdata import factors as _factors
-# from opdata.mongoconnect import *  
-import factors as _factors  
-from mongoconnect import *
+from opdata import factors as _factors
+from opdata.mongoconnect import *  
+# import factors as _factors  
+# from mongoconnect import *
 
 __T = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'calAll.csv'))
 __TM = ts.get_k_data('000001', ktype='M', index=True)[['date']]
@@ -546,8 +546,14 @@ def get_holdfund(code, start_date='2004-01-01', end_date='2017-12-12'):
     del T['isOpen']
     return T
 
-def __make_period__(period, start_date, end_date):
-    T = __T
+def __make_period__(period, start_date, end_date, us_market=False):
+    if us_market:
+        T = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)),'US500.csv'))
+        T = T['Date']
+        T = T.rename(columns={'Date':'calendarDate'}, inplace=True)
+        T['isOpen'] = 1
+    else:
+        T = __T
     T.rename(columns={'calendarDate':'date'}, inplace=True)    
     if period.endswith('d'):
         T = T[T.isOpen >0.5]
@@ -574,7 +580,7 @@ def __make_period__(period, start_date, end_date):
         # if week in [1,2,3,4]:
         #     stime = starttime - td(week,0,0)
         #     start_date = dt.strftime(stime, '%Y-%m-%d')
-        T = T[T.date >= '2001-01-01'] # this date is monday
+        T = T[T.date >= '2009-01-01'] # this date is monday
         T = T.reset_index()
         del T['index']        
         T = T[T.index%7==4] #it will select the friday.
@@ -588,7 +594,7 @@ def __make_period__(period, start_date, end_date):
     
     if period.endswith('m'):
         T = __TM
-        T = T[T.date >= '2001-01-01'] # this date is monday
+        T = T[T.date >= '2009-01-05'] # this date is monday
         T = T[T.index%int(period[:-1])==0]
         T = T[T.date <= (end_date+'-31')]
         return T
@@ -703,7 +709,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
             '速动比率','每股净资产','摊薄每股收益','每股销售额','open', 'close', 'volume',\
             'code', 'high', 'low']
     
-    print(code_list)
+    # print(code_list)
     # exit()
     for code in tqdm(code_list):         
         code = str(code)
@@ -711,16 +717,18 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
         if not us_market and len(code) <6:
             code = '000000'+code
             code = code[-6:]
-        print(code)        
+        # print(code)        
         df_price = get_day(code, '1995-01-01', end_date, us_market=us_market)
         if code == 'sh000300':
             df_price['name'] = 'sh300'
-        df_finance = get_finance(code, '1995-01-01', end_date)
+        
         if not us_market:
-            jp_finance = _factors.JP_VALUATION_FINANCE(code,'1995-01-01',end_date, us_market=us_market)
+            df_finance = get_finance(code, '1995-01-01', end_date)
+            jp_finance = _factors.JP_VALUATION_FINANCE(code,'1995-01-01',end_date)
             df_holdfund = get_holdfund(code,'2004-01-01',end_date)
             df_forecast = get_forecast(code,'2004-01-01',end_date)
         else:
+            df_finance = get_finance(code, '2010-01-01', end_date,us_market = True)
             jp_finance = pd.DataFrame()
             df_holdfund = pd.DataFrame()
             df_forecast = pd.DataFrame()
@@ -753,9 +761,10 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
                 continue
             else:
                 df[it]=np.nan
-        
-        T = __make_period__(period, start_date, end_date)
-        df = df.merge(T,how='right', on = 'date', suffixes=('', '_y'))
+
+        # import pdb;pdb.set_trace()
+        T = __make_period__(period, start_date, end_date, us_market=us_market)
+        df = T.merge(df,how='left', on = 'date', suffixes=('', '_y'))
         df = df.reset_index()
         del df['index']
         # PERIOD = int(period[:-1])
@@ -912,7 +921,7 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
                 #             call_with_name[ind](close_list, int(cu[0]), int(cu[1]), int(cu[2]), int(cu[3]))
         
         #pick up data
-        if period.endswith('m'):
+        if period.endswith('m') and len(start_date)==7:
             start_date = start_date+'-01'
         rangedf = df[df.date>= start_date] 
 
@@ -928,6 +937,9 @@ def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market
                 for jj in range(rangelen):
                     outT.append(pd.DataFrame([],columns=c_dt.keys()))
             outT[i].loc[len(outT[i])] = c_dt
+    
+    # import pdb;pdb.set_trace()
+    
     if len(factors)>=0:
         factors = ['code', 'close', 'date'] + factors
         factors = list(set(factors))
@@ -946,15 +958,17 @@ if __name__ == '__main__':
     # print(macrodata())
     # print(get_day('GOOGL','2007-08-05','2010-08-05',us_market=True))
     # _fetch_finance()
-    # print(get_finance('000001'))
+    # print(get_finance('AAPL',us_market=True))
     # print(get_local_future('A99'))
     # print(get_forecast('000001'))
     # print(get_holdfund('000001'))
     # print(get_future('XAU/USD'))
     # print(get_month('2010-01'))
     # print(get_ts_finance('000001','1m'))
-    re = get_all('usall','1m','2010-01', ['open', 'vol_1_1m','rsi_10_1m'],index=False, us_market=True)
-    print(re)
+    rea = get_all('usall','1m','2010-01', ['open', '总负债/总资产','总资本回报率'],index=False, us_market=True)
+    print(rea)
+    # re = get_all('test','1m','2010-01', ['open', 'net_profit_ratio', 'EBITDA2TA'],index=False)
+    # print(re)
     # _fetch_forecast()
     # print(re[1])
     # print(re[2])    
