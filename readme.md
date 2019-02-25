@@ -146,3 +146,76 @@ ________________________________________________________________________________
 '资本性支出', '并购资产净额', '固定资产和业务出售收入', '投资买卖净额', \
 '投资净现金流', '红利支付', '股权融资净额', '债权融资净额', '其他融资净额', \
 '融资净现金流', '汇率变动影响', '其他现金流', '净现金流', '自由现金流']
+
+
+# 代码说明
+## opdata.py
+### def get_day(code, start_date='2001-02-01', end_date='2017-10-10', us_market=False):
+获取日线量价数据，us_market 表示是否是美国市场数据。
+
+
+### def macrodata(start=None, end=None):
+    """macroeconomics data : Shibor | Reserve Ratio | M2 | GDP | CPI | Loan Rate.
+    the data start from 2006-10-08. Cause it is when the shibor data start on Tushare.
+
+    parameters:
+    ---------
+        start: a string present a date indicates the return data start from. for example: '2011-01-22'
+        end  : refer to start
+    return: 
+    --------
+        pandas.DataFrame        
+    """
+
+### def _fetch_finance():
+非外部接口，按期调用一次。这个函数会从tushare爬取数据然后存入数据库当中。
+``` 注意： 当要调用这个函数的时候，需要把该文件的13 、14行替换为15 、 16行。 对factors.py文件也是需要替换相应的代码。在服务器当中，opdata的位置在~/python/ 文件夹下。```
+### def _fetch_forecast():
+参考上面那个函数
+
+### def get_finance(code, start_date='2004-04-01', end_date='2017-10-10', us_market=False):
+获取财务指标，返回日线dataframe
+
+### def get_local_future(code, start_date='2009-10-01', end_date='2018-03-02'):
+获取期货日线数据
+
+### def get_future(code, start_date='2009-10-01', end_date='2018-03-02'): 
+获取期货日线，与上一个函数的区别忘了，o(╥﹏╥)o
+
+### def __get_predictors(data):
+非接口，内部函数
+
+### def get_month(mdate):
+获取月线量价
+
+### def get_ts_finance(code, period):
+    """period will be just 3d, 1w, 2w, 1m, 3m, 6m
+    
+    Arguments:
+        code {string} -- stock code
+        period {string} -- string present period
+    """    
+
+### def get_forecast(code, start_date='2004-01-01', end_date='2017-12-12'):
+见名知意系列， tushare的forcast数据
+
+### def get_holdfund(code, start_date='2004-01-01', end_date='2017-12-12'):
+……
+
+### def __make_period__(period, start_date, end_date, us_market=False):
+内部函数，返回一个标准指定了周期的数据列表。 也就是跳过节假日，还按周期要求的数据表。 为了给真正意义的输出做对齐使用。
+
+### def __parse_factors(factors, period):
+    """factors format: rsi_{arg}_{period}  or macd_{arg1}_{arg2}_{arg3}_{period}   
+    """
+对getall接口的 技术指标参数进行解析。
+
+### def get_all(pool, period, start_date, factors=[], count=0, index=True, us_market = False, **args):
+请参看最上边
+
+
+## factor.py
+### def JP_VALUATION_FINANCE(code, start_date='2009-01-01', end_date='2017-12-31'):
+计算jp摩根那份报告的财务指标，给get_all接口调用。
+
+
